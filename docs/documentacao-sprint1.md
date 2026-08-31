@@ -89,13 +89,112 @@ O presente projeto consiste no desenvolvimento de uma solução de software **mu
 
 ## 2. Modelagem Inicial e Banco de Dados
 
-O banco de dados relacional foi escolhido para orquestrar as informações de forma transacional, utilizando o **Prisma ORM** para a modelagem lógica e o mapeamento objeto-relacional seguro e performático junto à API NestJS.
+O banco de dados relacional foi escolhido para orquestrar as informações de forma transacional, utilizando o **Prisma ORM** para a modelagem lógica e o mapeamento objeto-relacional seguro e performático junto à API NestJS. O modelo abaixo já contempla as entidades de apoio necessárias para clusterização, predição e controle de acesso de usuários (previstos nos RF02, RF03, RF05 e RF06).
 
-| Entidade Conceitual | Descrição / Atributos Principais |
-| --- | --- |
-| **Regiao_Produtora** | ID, Nome_Regiao, Pais, Coordenadas |
-| **Condicao_Climatica** | ID, Regiao_ID, Data, Temperatura_Media, Precipitacao, Umidade, Radiacao_Solar |
-| **Safra_Rendimento** | ID, Regiao_ID, Ano_Colheita, Dias_Crescimento, Rendimento_Toneladas_Hectare |
+### 2.1. Dicionário de Entidades
+
+| Entidade Conceitual | Atributos Principais | Relacionamentos |
+| --- | --- | --- |
+| **Pais** | ID (PK), Nome, Continente | 1:N com Regiao_Produtora |
+| **Regiao_Produtora** | ID (PK), Nome_Regiao, Pais_ID (FK), Coordenadas, Area_Hectares | N:1 com Pais; 1:N com Condicao_Climatica, Safra_Rendimento, Predicao_Produtividade; N:N com Cluster_Climatico e Usuario |
+| **Condicao_Climatica** | ID (PK), Regiao_ID (FK), Data, Temperatura_Media, Precipitacao, Umidade, Radiacao_Solar | N:1 com Regiao_Produtora |
+| **Variedade_Cafe** | ID (PK), Nome, Descricao | 1:N com Safra_Rendimento |
+| **Safra_Rendimento** | ID (PK), Regiao_ID (FK), Variedade_ID (FK), Ano_Colheita, Dias_Crescimento, Rendimento_Toneladas_Hectare | N:1 com Regiao_Produtora e Variedade_Cafe |
+| **Cluster_Climatico** | ID (PK), Nome_Cluster, Algoritmo_Utilizado, Data_Execucao | N:N com Regiao_Produtora (via Regiao_Cluster) |
+| **Regiao_Cluster** *(associativa)* | ID (PK), Regiao_ID (FK), Cluster_ID (FK), Ano_Referencia | Resolve N:N entre Regiao_Produtora e Cluster_Climatico |
+| **Predicao_Produtividade** | ID (PK), Regiao_ID (FK), Ano_Referencia, Rendimento_Estimado, Modelo_Utilizado, Margem_Erro, Data_Execucao | N:1 com Regiao_Produtora |
+| **Usuario** | ID (PK), Nome, Email, Senha_Hash, Perfil (Admin/Tecnico/Produtor) | N:N com Regiao_Produtora (via Usuario_Regiao) |
+| **Usuario_Regiao** *(associativa)* | ID (PK), Usuario_ID (FK), Regiao_ID (FK) | Resolve N:N entre Usuario e Regiao_Produtora — implementa a regra de acesso do RF06.2 |
+
+### 2.2. Diagrama Entidade-Relacionamento
+
+```mermaid
+erDiagram
+    PAIS ||--o{ REGIAO_PRODUTORA : possui
+    REGIAO_PRODUTORA ||--o{ CONDICAO_CLIMATICA : registra
+    REGIAO_PRODUTORA ||--o{ SAFRA_RENDIMENTO : produz
+    VARIEDADE_CAFE ||--o{ SAFRA_RENDIMENTO : classifica
+    REGIAO_PRODUTORA ||--o{ REGIAO_CLUSTER : agrupada_em
+    CLUSTER_CLIMATICO ||--o{ REGIAO_CLUSTER : contem
+    REGIAO_PRODUTORA ||--o{ PREDICAO_PRODUTIVIDADE : estima
+    USUARIO ||--o{ USUARIO_REGIAO : vincula
+    REGIAO_PRODUTORA ||--o{ USUARIO_REGIAO : vinculada_a
+
+    PAIS {
+        int ID PK
+        string Nome
+        string Continente
+    }
+    REGIAO_PRODUTORA {
+        int ID PK
+        string Nome_Regiao
+        int Pais_ID FK
+        string Coordenadas
+        float Area_Hectares
+    }
+    CONDICAO_CLIMATICA {
+        int ID PK
+        int Regiao_ID FK
+        date Data
+        float Temperatura_Media
+        float Precipitacao
+        float Umidade
+        float Radiacao_Solar
+    }
+    VARIEDADE_CAFE {
+        int ID PK
+        string Nome
+        string Descricao
+    }
+    SAFRA_RENDIMENTO {
+        int ID PK
+        int Regiao_ID FK
+        int Variedade_ID FK
+        int Ano_Colheita
+        int Dias_Crescimento
+        float Rendimento_Toneladas_Hectare
+    }
+    CLUSTER_CLIMATICO {
+        int ID PK
+        string Nome_Cluster
+        string Algoritmo_Utilizado
+        date Data_Execucao
+    }
+    REGIAO_CLUSTER {
+        int ID PK
+        int Regiao_ID FK
+        int Cluster_ID FK
+        int Ano_Referencia
+    }
+    PREDICAO_PRODUTIVIDADE {
+        int ID PK
+        int Regiao_ID FK
+        int Ano_Referencia
+        float Rendimento_Estimado
+        string Modelo_Utilizado
+        float Margem_Erro
+        date Data_Execucao
+    }
+    USUARIO {
+        int ID PK
+        string Nome
+        string Email
+        string Senha_Hash
+        string Perfil
+    }
+    USUARIO_REGIAO {
+        int ID PK
+        int Usuario_ID FK
+        int Regiao_ID FK
+    }
+```
+
+### 2.3. Observações de Modelagem
+
+- **Pais** foi normalizado como entidade própria (em vez de campo texto em Regiao_Produtora) para permitir agregações futuras por país/continente.
+- **Regiao_Cluster** e **Usuario_Regiao** são tabelas associativas que resolvem relacionamentos N:N — uma região pode pertencer a diferentes clusters ao longo dos anos (`Ano_Referencia`), e um usuário técnico pode estar vinculado a múltiplas regiões.
+- **Cluster_Climatico** e **Predicao_Produtividade** guardam metadados de execução (`Algoritmo_Utilizado`, `Modelo_Utilizado`, `Data_Execucao`) para rastreabilidade dos resultados gerados pelo módulo Python — essencial para justificar os resultados no relatório final.
+- **Variedade_Cafe** foi adicionada para permitir análises futuras segmentadas por variedade (ex: Arábica vs. Robusta), caso o dataset do Kaggle contemple essa informação.
 
 ---
 
