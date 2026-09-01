@@ -1,0 +1,35 @@
+---
+description: Regras de negócio principais da plataforma Café PI (Grupo 07)
+alwaysApply: true
+---
+
+# Regras de negócio — Café PI
+
+## Domínio
+
+- Plataforma cruza **clima** × **produtividade do café** para inteligência ao produtor.
+- Persistência só após tratar *missing values* em temperatura, precipitação, umidade, radiação solar e rendimento (RF01).
+- Unificação das bases Kaggle usa **região produtora + ano de colheita** como chaves de join.
+
+## Entidades canônicas
+
+- `Regiao_Produtora`: nome, país, coordenadas.
+- `Condicao_Climatica`: região, data, temperatura média, precipitação, umidade, radiação solar.
+- `Safra_Rendimento`: região, ano colheita, dias crescimento, rendimento t/ha.
+- Perfis de usuário: `ADMIN` | `TECNICO` | `PRODUTOR`.
+
+## Acesso (RF06)
+
+- **Produtor:** só regiões às quais está vinculado.
+- **Técnico:** múltiplas regiões sob responsabilidade.
+- **Administrador:** acesso irrestrito.
+
+## API
+
+- JWT em todas as rotas, **exceto** `POST /auth/login` e `POST /auth/register`.
+- Web e Mobile consomem a **mesma** API NestJS — não duplicar regra de negócio no front.
+- `GET /clusters` = Sprint 2; `GET /predicoes/:regiaoId` = Sprint 3.
+
+## Stack do PI
+
+Não trocar NestJS, Next.js, Prisma ou PostgreSQL sem acordo do grupo.

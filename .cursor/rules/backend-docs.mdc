@@ -1,0 +1,30 @@
+---
+description: Manter documentação do back-end sincronizada com mudanças de código
+globs: backend/**/*
+alwaysApply: false
+---
+
+# Documentação do back-end
+
+Sempre que alterar código em `backend/`, atualize a documentação **na mesma entrega**.
+
+## O que atualizar
+
+- [`backend/README.md`](backend/README.md): setup, scripts, variáveis de ambiente, módulos e endpoints
+- Swagger/OpenAPI (`@ApiTags`, `@ApiOperation`, DTOs): espelhar rotas, params e payloads novos ou alterados
+- [`docs/`](docs/) quando a mudança afetar escopo de sprint, entidades ou contratos da API descritos lá
+
+## Quando é obrigatório
+
+- Novo módulo, rota, DTO, guard ou entidade Prisma
+- Mudança de contrato (path, query, body, status HTTP, auth)
+- Novo script npm ou variável em `.env.example`
+
+## Checklist rápido
+
+1. Código compilando
+2. README do backend reflete o comportamento atual
+3. Swagger descreve a rota (sem deixar descrição desatualizada)
+4. Não deixar “em breve” / placeholder se a feature já existe
+
+Não faça commit de mudança de API sem a doc correspondente.

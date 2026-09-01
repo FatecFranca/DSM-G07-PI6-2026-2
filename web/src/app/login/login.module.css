@@ -1,0 +1,65 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(107, 143, 113, 0.28), transparent 60%),
+    #152415;
+}
+
+.card {
+  width: min(100%, 400px);
+  padding: 2rem;
+  background: rgba(24, 36, 24, 0.9);
+  border: 1px solid rgba(243, 234, 216, 0.12);
+}
+
+.card h1 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  font-size: 1.75rem;
+  margin: 0 0 0.4rem;
+}
+
+.card p {
+  margin: 0 0 1.5rem;
+  color: #d9cdb8;
+  font-size: 0.95rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+  opacity: 0.8;
+}
+
+.field {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(243, 234, 216, 0.2);
+  background: rgba(15, 26, 15, 0.5);
+  color: #f3ead8;
+  font: inherit;
+}
+
+.btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.85rem;
+  background: #c4a35a;
+  color: #0f1a0f;
+  font-weight: 600;
+}
+
+.links {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}

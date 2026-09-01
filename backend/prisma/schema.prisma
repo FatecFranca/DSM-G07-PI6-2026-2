@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PerfilUsuario {
+  ADMIN
+  TECNICO
+  PRODUTOR
+}
+
+model Usuario {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  senhaHash    String
+  nome         String
+  perfil       PerfilUsuario @default(PRODUTOR)
+  criadoEm     DateTime      @default(now())
+  atualizadoEm DateTime      @updatedAt
+
+  regioes RegiaoProdutora[] @relation("UsuarioRegioes")
+}
+
+model RegiaoProdutora {
+  id          String  @id @default(cuid())
+  nomeRegiao  String
+  pais        String
+  latitude    Float?
+  longitude   Float?
+
+  condicoes CondicaoClimatica[]
+  safras    SafraRendimento[]
+  usuarios  Usuario[]           @relation("UsuarioRegioes")
+
+  @@map("Regiao_Produtora")
+}
+
+model CondicaoClimatica {
+  id               String   @id @default(cuid())
+  regiaoId         String
+  data             DateTime
+  temperaturaMedia Float?
+  precipitacao     Float?
+  umidade          Float?
+  radiacaoSolar    Float?
+
+  regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
+
+  @@index([regiaoId])
+  @@map("Condicao_Climatica")
+}
+
+model SafraRendimento {
+  id                        String @id @default(cuid())
+  regiaoId                  String
+  anoColheita               Int
+  diasCrescimento           Int?
+  rendimentoToneladasHectare Float?
+
+  regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
+
+  @@unique([regiaoId, anoColheita])
+  @@index([regiaoId])
+  @@map("Safra_Rendimento")
+}

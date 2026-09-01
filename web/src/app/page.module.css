@@ -1,0 +1,98 @@
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(107, 143, 113, 0.35), transparent 55%),
+    linear-gradient(160deg, #152415 0%, #1f331f 45%, #2a2218 100%);
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 2rem;
+}
+
+.brand {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.navLinks a {
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+
+.navLinks a:hover {
+  opacity: 1;
+}
+
+.heroMain {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem 2rem 4rem;
+  max-width: 42rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+.heroMain h1 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  line-height: 1.1;
+  margin: 0 0 1rem;
+}
+
+.lead {
+  color: var(--cream-muted);
+  font-size: 1.1rem;
+  line-height: 1.55;
+  margin: 0 0 2rem;
+  max-width: 34rem;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btnPrimary {
+  background: var(--accent);
+  color: var(--ink);
+  padding: 0.85rem 1.4rem;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--cream);
+  padding: 0.85rem 1.4rem;
+  border: 1px solid rgba(243, 234, 216, 0.35);
+  border-radius: 2px;
+}
+
+@media (max-width: 640px) {
+  .nav,
+  .heroMain {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
