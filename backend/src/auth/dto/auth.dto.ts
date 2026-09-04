@@ -5,16 +5,16 @@ import { PerfilUsuario } from '@prisma/client';
 export class RegisterDto {
   @ApiProperty({ example: 'produtor@email.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'senhaSegura123', minLength: 6 })
   @IsString()
   @MinLength(6)
-  senha: string;
+  senha!: string;
 
   @ApiProperty({ example: 'João Silva' })
   @IsString()
-  nome: string;
+  nome!: string;
 
   @ApiPropertyOptional({ enum: PerfilUsuario, default: PerfilUsuario.PRODUTOR })
   @IsOptional()
@@ -25,9 +25,9 @@ export class RegisterDto {
 export class LoginDto {
   @ApiProperty({ example: 'produtor@email.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'senhaSegura123' })
   @IsString()
-  senha: string;
+  senha!: string;
 }
