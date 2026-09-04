@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.ipynb_checkpoints/
+
+# CSVs reais baixados do Kaggle e saídas geradas — não versionar.
+# A amostra sintética em data/sample/ fica de fora deste ignore de propósito.
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
