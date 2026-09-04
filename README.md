@@ -36,6 +36,7 @@ Documentação completa da Sprint 1: [documentacao-sprint1.md](./docs/documentac
 /
 ├── backend/                 # API NestJS + Prisma
 ├── web/                     # Protótipo Next.js (telas estáticas)
+├── mobile/                  # Protótipo React Native + Expo
 ├── docker-compose.yml       # PostgreSQL local
 ├── docs/                    # Documentação das sprints
 │   └── documentacao-sprint1.md
@@ -103,6 +104,16 @@ npm run dev
 
 - App: `http://localhost:3000`
 
+### 4. Aplicativo mobile
+
+```bash
+cd mobile
+npm install
+npm start
+```
+
+O app inicia em modo demonstração com dados mockados. Para consumir a API, copie `mobile/.env.example` para `mobile/.env` e defina `EXPO_PUBLIC_USE_API=true`. Em dispositivo físico, use o IP local da máquina no `EXPO_PUBLIC_API_URL` em vez de `localhost`.
+
 ---
 
 ## Sprint 1 vs. próximas sprints
@@ -112,7 +123,7 @@ npm run dev
 | Escopo, modelagem, repo, NestJS + Prisma, Next.js estático, planejamento nuvem/mineração | **1** (atual) |
 | K-Means / clusters | 2 |
 | Regressão / predições de produtividade | 3 |
-| App mobile Expo | planejado (Seção 7 da doc) |
+| App mobile Expo (protótipo navegável) | Sprint 1 |
 
 ---
 

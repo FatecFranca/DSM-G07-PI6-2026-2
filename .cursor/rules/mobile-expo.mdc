@@ -1,0 +1,40 @@
+---
+description: Convenções para desenvolvimento do aplicativo mobile Expo da plataforma Cafe PI
+globs: mobile/**/*
+alwaysApply: false
+---
+
+# Mobile Expo — Cafe PI
+
+## Escopo
+
+- O aplicativo fica isolado em `mobile/` e usa React Native com Expo e TypeScript.
+- O mobile consome a API NestJS existente; não duplicar regra de negocio no cliente.
+- Todo texto visivel ao usuario deve estar em portugues do Brasil.
+
+## Arquitetura
+
+- Separar telas, componentes, tipos, servicos de API, mocks e persistencia local.
+- Manter os tipos de resposta da API em um modulo compartilhado do mobile.
+- Usar adaptadores para trocar dados mockados por chamadas reais sem reescrever as telas.
+- Centralizar a URL da API em `EXPO_PUBLIC_API_URL`; nunca fixar IP ou token no codigo.
+
+## Dados e sessao
+
+- O token JWT deve ser tratado como dado de sessao e nunca exibido na interface.
+- Usar `AsyncStorage` apenas para sessao e ultimo snapshot necessario ao modo offline.
+- Exibir claramente quando os dados apresentados vierem do cache ou forem mockados.
+- Respeitar os contratos canonicos: `regiaoId`, `nomeRegiao`, `temperaturaMedia`, `precipitacao`, `umidade`, `radiacaoSolar` e `rendimentoToneladasHectare`.
+
+## UI mobile
+
+- Priorizar leitura rapida em campo: hierarquia clara, alvos de toque confortaveis e pouco texto por tela.
+- Criar estados de carregamento, erro, vazio e offline para cada fluxo que depender de dados.
+- Evitar componentes que dependam de largura fixa; testar telas estreitas.
+- Reutilizar cores e linguagem visual do web sem copiar layout desktop literalmente.
+
+## Validacao
+
+- Depois de alterar o mobile, executar `npm run typecheck` dentro de `mobile/`.
+- Validar o fluxo login -> regioes -> detalhe -> voltar no Expo Go ou emulador.
+- Ao alterar persistencia ou API, testar tambem a abertura sem rede usando o ultimo snapshot salvo.
