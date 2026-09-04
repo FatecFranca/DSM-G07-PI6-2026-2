@@ -1,0 +1,16 @@
+---
+description: Manter contratos e integracao do mobile com a API NestJS consistentes
+globs: mobile/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Contratos Mobile e API
+
+- Rotas publicas de autenticacao: `POST /auth/login` e `POST /auth/register`.
+- Rotas de consulta previstas: `GET /regioes`, `GET /clima/:regiaoId` e `GET /safra/:regiaoId`.
+- `GET /clusters` e `GET /predicoes/:regiaoId` pertencem a sprints futuras; no prototipo, usar adaptadores mockados explicitamente identificados.
+- Enviar o JWT no header `Authorization: Bearer <token>` quando a protecao de rotas estiver ativa.
+- Tratar respostas HTTP, timeout e ausencia de rede sem apagar automaticamente o ultimo cache valido.
+- Nao assumir que `localhost` funciona em dispositivo fisico; documentar a URL correta para emulador, IP local e ambiente hospedado.
+- Se o backend alterar path, payload ou status, atualizar os tipos, o servico HTTP e `mobile/README.md` na mesma entrega.
+- Nao colocar credenciais, tokens reais ou URLs privadas no repositorio.

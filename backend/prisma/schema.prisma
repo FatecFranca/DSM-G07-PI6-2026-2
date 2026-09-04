@@ -26,11 +26,11 @@ model Usuario {
 }
 
 model RegiaoProdutora {
-  id          String  @id @default(cuid())
-  nomeRegiao  String
-  pais        String
-  latitude    Float?
-  longitude   Float?
+  id         String @id @default(cuid())
+  nomeRegiao String
+  pais       String
+  latitude   Float?
+  longitude  Float?
 
   condicoes CondicaoClimatica[]
   safras    SafraRendimento[]
@@ -55,10 +55,10 @@ model CondicaoClimatica {
 }
 
 model SafraRendimento {
-  id                        String @id @default(cuid())
-  regiaoId                  String
-  anoColheita               Int
-  diasCrescimento           Int?
+  id                         String @id @default(cuid())
+  regiaoId                   String
+  anoColheita                Int
+  diasCrescimento            Int?
   rendimentoToneladasHectare Float?
 
   regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)

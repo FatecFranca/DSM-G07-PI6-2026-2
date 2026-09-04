@@ -13,10 +13,11 @@
     "rootDir": "./src",
     "incremental": true,
     "skipLibCheck": true,
+    "strict": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
-    "forceConsistentCasingInFileNames": false,
+    "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
     "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
   },
