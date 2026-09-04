@@ -8,8 +8,6 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "target": "ES2021",
-    "moduleResolution": "node",
-    "baseUrl": "./",
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
