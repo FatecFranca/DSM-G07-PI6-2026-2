@@ -10,7 +10,7 @@
 
 ---
 
-## 0. Checklist de Conformidade com as Entregas Mínimas da Sprint 1
+## Checklist de Conformidade com as Entregas Mínimas da Sprint 1
 
 De acordo com o cronograma oficial do PI, a 1ª Sprint (04/09/2026) exige as entregas mínimas abaixo. Esta seção mapeia cada exigência à seção correspondente deste documento:
 
@@ -29,7 +29,7 @@ De acordo com o cronograma oficial do PI, a 1ª Sprint (04/09/2026) exige as ent
 
 ## 1. Definição do Escopo e Requisitos
 
-O presente projeto consiste no desenvolvimento de uma solução de software **multiplataforma** (Web e Mobile) orientada à mineração de dados focada na cafeicultura, conectando-se diretamente com a realidade do agronegócio. A plataforma cruzará dados meteorológicos com registros de produtividade para prover inteligência de negócios aos produtores rurais, disponibilizando os resultados tanto em um dashboard web quanto em um aplicativo mobile para uso em campo.
+O presente projeto consiste no desenvolvimento de uma solução de software **multiplataforma** (Web e Mobile) orientada à mineração de dados focada na cafeicultura, conectando-se diretamente com a realidade do agronegócio. A plataforma cruzará dados meteorológicos com registros de produtividade para prover inteligência de negócios aos produtores rurais, disponibilizando os resultados em um dashboard na web e também dentro do aplicativo mobile.
 
 ### 1.1. Requisitos Funcionais (RF)
 
