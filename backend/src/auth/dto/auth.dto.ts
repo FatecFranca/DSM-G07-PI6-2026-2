@@ -1,6 +1,5 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PerfilUsuario } from '@prisma/client';
+import { IsEmail, IsString, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
   @ApiProperty({ example: 'produtor@email.com' })
@@ -15,11 +14,6 @@ export class RegisterDto {
   @ApiProperty({ example: 'João Silva' })
   @IsString()
   nome: string;
-
-  @ApiPropertyOptional({ enum: PerfilUsuario, default: PerfilUsuario.PRODUTOR })
-  @IsOptional()
-  @IsEnum(PerfilUsuario)
-  perfil?: PerfilUsuario;
 }
 
 export class LoginDto {

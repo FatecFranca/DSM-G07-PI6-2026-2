@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { ClimaModule } from './clima/clima.module';
+import { ClustersModule } from './clusters/clusters.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RegioesModule } from './regioes/regioes.module';
 import { SafraModule } from './safra/safra.module';
@@ -11,8 +12,8 @@ import { SafraModule } from './safra/safra.module';
     AuthModule,
     RegioesModule,
     ClimaModule,
+    ClustersModule,
     SafraModule,
-    // ClustersModule / PredicoesModule — Sprint 2 / Sprint 3
   ],
 })
 export class AppModule {}

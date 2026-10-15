@@ -1,8 +1,28 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { SafraService } from './safra.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { CreateSafraDto, UpdateSafraDto } from './dto/safra.dto';
 
 @ApiTags('safra')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('safra')
 export class SafraController {
   constructor(private readonly safraService: SafraService) {}
@@ -12,5 +32,23 @@ export class SafraController {
   @ApiParam({ name: 'regiaoId' })
   findByRegiao(@Param('regiaoId') regiaoId: string) {
     return this.safraService.findByRegiao(regiaoId);
+  }
+
+  @Post()
+  @Roles('ADMIN', 'TECNICO')
+  create(@Body() dto: CreateSafraDto) {
+    return this.safraService.create(dto);
+  }
+
+  @Patch(':id')
+  @Roles('ADMIN', 'TECNICO')
+  update(@Param('id') id: string, @Body() dto: UpdateSafraDto) {
+    return this.safraService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles('ADMIN')
+  remove(@Param('id') id: string) {
+    return this.safraService.remove(id);
   }
 }

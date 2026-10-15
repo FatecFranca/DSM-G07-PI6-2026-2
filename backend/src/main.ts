@@ -17,7 +17,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Café PI — API')
     .setDescription(
-      'API RESTful da plataforma de mineração de dados agrícolas e climáticos do café (Sprint 1). Endpoints GET /clusters e GET /predicoes/:regiaoId entram nas Sprints 2 e 3.',
+      'API RESTful da plataforma de mineração de dados agrícolas e climáticos do café (Sprint 2).',
     )
     .setVersion('0.1.0')
     .addBearerAuth()
@@ -29,4 +29,4 @@ async function bootstrap() {
   const port = Number(process.env.PORT) || 3001;
   await app.listen(port);
 }
-bootstrap();
+void bootstrap();
