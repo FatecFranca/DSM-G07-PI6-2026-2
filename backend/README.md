@@ -82,4 +82,9 @@ npm run test:e2e       # testes de integração
 npm run prisma:seed    # popula dados locais de forma reproduzível
 ```
 
+O `tsconfig.json` do back-end inclui somente `src`, que é o diretório de
+produção definido por `rootDir`. Os testes e2e em `test/` são compilados pelo
+Jest usando `test/jest-e2e.json`, evitando o diagnóstico de arquivos fora do
+`rootDir` no editor e no build da API.
+
 Não versionar `.env`, credenciais, tokens ou arquivos de dados sensíveis.

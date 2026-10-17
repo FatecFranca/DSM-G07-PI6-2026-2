@@ -1,0 +1,19 @@
+---
+description: Política global para commits e pushes sem coautoria automática
+globs: "**/*"
+alwaysApply: true
+---
+
+# Política de Git
+
+- Não criar commits ou executar `git push` sem solicitação explícita do usuário.
+- Quando o usuário solicitar commit ou push, não adicionar trailers de
+  coautoria, incluindo `Co-authored-by`.
+- Não atribuir coautoria automática ao Copilot, a agentes ou a qualquer outra
+  pessoa.
+- Antes de um commit, verificar `git status`, revisar os arquivos staged e
+  executar `git diff --check`.
+- Nunca incluir `.env`, senhas, tokens, chaves privadas ou outros segredos no
+  commit.
+- Informar ao usuário o hash do commit, a branch e o resultado do push quando
+  essas operações forem solicitadas e concluídas.
