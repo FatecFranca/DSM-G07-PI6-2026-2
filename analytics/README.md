@@ -31,8 +31,12 @@ uma estimativa por transferência, não um rendimento observado.
 
 ## Notebooks
 
+Ordem de execução: 00 → 01 → 02 → 03 → 04. Do 01 ao 04, tudo lê de
+`data/processed/` (saída do 00), nunca do CSV bruto.
+
 | Notebook | RF | Depende do Postgres? |
 | --- | --- | --- |
+| `00_preprocessamento.ipynb` | RF01 | Não |
 | `01_ingestao.ipynb` | RF01 | Sim |
 | `02_correlacao.ipynb` | RF02.1 | Não |
 | `03_kmeans.ipynb` | RF02.2 | Não |
@@ -53,9 +57,16 @@ Baixe os dois CSVs e salve em `data/raw/` com os nomes acima antes de rodar.
 
 ## Resultados de referência
 
+- Pré-processamento: 28 nulos em `Solar_Radiation` (interpolados), 231
+  rendimentos negativos removidos, 0 duplicados. Detalhes em
+  `docs/explicacao-preprocessamento.md`.
 - K-Means: melhor `k=2` (silhouette 0.346), separa principalmente por
   temperatura média.
-- Regressão (holdout 20%): MAE≈0.89, RMSE≈1.09, R²≈0.59.
+- Regressão (holdout 20%): MAE≈0.88, RMSE≈1.08, R²≈0.59. Linear (0.593) >
+  CART (0.583) > KNN (0.566) na validação cruzada.
+- Limitação: 23 das 25 regiões têm chuva anual acima de 1000 mm, fora da
+  faixa do treino (100–1000 mm). A estimativa por transferência fica
+  saturada (~6.7–6.9 t/ha) e não discrimina regiões; use só como exploratória.
 
 ## Próximos passos
 
