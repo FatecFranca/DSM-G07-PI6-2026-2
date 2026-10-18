@@ -1,0 +1,38 @@
+---
+description: Manter o documento geral atualizado em toda alteração do projeto
+applyTo: "**"
+---
+
+# Documentação geral do projeto
+
+Sempre que qualquer arquivo, funcionalidade, configuração, endpoint, entidade,
+script, tela, dependência ou processo do projeto for alterado, atualize também
+o documento geral na mesma entrega:
+
+- [`docs/documentacao-sprint2.md`](../../docs/documentacao-sprint2.md)
+
+## Regras
+
+- Atualize a seção correspondente à alteração realizada.
+- Registre o comportamento atual, não apenas o planejamento.
+- Atualize status, endpoints, comandos, pendências e evidências quando forem
+  afetados.
+- Inclua links para arquivos, scripts ou commits quando isso facilitar a
+  reprodução da entrega.
+- Não registre senhas, tokens, chaves privadas ou outros dados sensíveis.
+- Se a alteração não tiver uma seção adequada, crie uma subseção objetiva sem
+  remover informações válidas existentes.
+- Se o documento geral for o próprio arquivo alterado, revise seu conteúdo para
+  manter o checklist e as referências consistentes.
+
+## Checklist obrigatório
+
+Antes de considerar a tarefa concluída:
+
+1. Identifique a seção da documentação geral afetada.
+2. Atualize a documentação junto com o código ou configuração.
+3. Verifique se os comandos, caminhos e endpoints descritos continuam válidos.
+4. Registre limitações ou pendências que permanecerem.
+
+Uma alteração não está completa enquanto a documentação geral não refletir o
+estado atual do projeto.

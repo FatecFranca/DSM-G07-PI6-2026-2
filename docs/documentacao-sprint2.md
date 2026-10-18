@@ -20,14 +20,22 @@ código correspondentes antes da entrega.
 | Entrega prevista | Status | Evidência |
 | --- | --- | --- |
 | Back-end com endpoints básicos da API implementados (CRUD) | Concluído no ambiente local | Seção 1 |
-| Front-end parcialmente integrado ao back-end | Em validação | Seção 2 |
+| Front-end parcialmente integrado ao back-end | Implementado no Web | Seção 2 |
 | Banco de dados implementado e populado com dados de teste | Concluído no ambiente local | Seção 3 |
 | Commits ativos de todos os integrantes no GitHub | Em validação | Seção 4 |
 | Ambiente em nuvem criado, mesmo que parcialmente | Em validação | Seção 5 |
 | Documentação da configuração inicial da nuvem | Em validação | Seção 5 |
 | Coleta e tratamento dos dados | Em validação | Seção 6 |
 | Aplicação de técnica inicial de mineração de dados | Implementado preliminarmente | Seção 6 |
-| Documentação intermediária atualizada com evidências | Em andamento | Este documento |
+| Documentação intermediária atualizada com evidências | Atualizada | Este documento |
+
+### Nota de compilação do back-end
+
+O `backend/tsconfig.json` considera somente `backend/src`, que corresponde ao
+`rootDir` e ao código de produção. Os testes e2e permanecem em
+`backend/test/` e usam a configuração específica do Jest em
+`backend/test/jest-e2e.json`. Essa separação elimina o diagnóstico do
+TypeScript sobre `app.e2e-spec.ts` estar fora do `rootDir`.
 
 ---
 
@@ -99,11 +107,11 @@ ainda utilizam dados estáticos ou aguardam integração.
 
 | Tela ou funcionalidade | Integração | Observação |
 | --- | --- | --- |
-| Login | A preencher | Informar endpoint utilizado |
-| Lista de regiões | A preencher | Informar filtros disponíveis |
-| Condições climáticas | A preencher | Informar região consultada |
-| Dados de safra | A preencher | Informar dados exibidos |
-| Dashboard | A preencher | Separar dados reais e mockados |
+| Login | Integrado | `POST /auth/login`, sessão JWT no Web |
+| Lista de regiões | Integrado | `GET /regioes` |
+| Condições climáticas | Integrado | `GET /clima/:regiaoId` |
+| Dados de safra | Integrado | `GET /safra/:regiaoId` |
+| Dashboard | Integrado parcialmente | Clima, safra e clusters; gráficos continuam pendentes |
 
 ### 2.2. Critérios técnicos
 
@@ -111,6 +119,7 @@ ainda utilizam dados estáticos ou aguardam integração.
 - Regras de negócio não devem ser duplicadas nos componentes da interface.
 - Estados de carregamento, sucesso e erro devem ser tratados nas telas
   integradas.
+- O Web utiliza Tailwind CSS para os estilos das telas integradas.
 - URLs e credenciais de acesso devem ser configuradas por variáveis de
   ambiente, sem valores sensíveis versionados.
 - A aplicação web e o aplicativo mobile, quando aplicável, devem consumir a
@@ -127,7 +136,11 @@ Inserir nesta seção:
 
 **Evidências da equipe:**
 
-> Inserir prints, links para arquivos ou referências aos commits.
+> O cliente tipado está em `web/src/lib/api.ts`, a sessão em
+> `web/src/lib/session.ts` e a URL da API em `web/.env.example`. O Web foi
+> validado com `npm run lint` e `npm run build`. O aplicativo mobile ainda não
+> foi criado; seus contratos, Bearer token e URL configurável estão documentados
+> no README do Web para reutilização futura.
 
 ---
 
@@ -342,3 +355,29 @@ tratado na próxima entrega.
 - [README do back-end](../backend/README.md)
 - [Schema Prisma](../backend/prisma/schema.prisma)
 - [Regras de negócio](../.cursor/rules/regras-negocio.mdc)
+
+## 9. Regras de documentação do projeto
+
+As regras de desenvolvimento e documentação estão disponíveis tanto para o
+Cursor quanto para o GitHub Copilot:
+
+- Regras do Cursor: [`.cursor/rules/`](../.cursor/rules/)
+- Instruções do GitHub Copilot: [`.github/instructions/`](../.github/instructions/)
+- Instruções gerais do Copilot: [`.github/copilot-instructions.md`](../.github/copilot-instructions.md)
+- Regras da Sprint 2: [`stack-sprint2.mdc`](../.cursor/rules/stack-sprint2.mdc) e
+  [`stack-sprint2.instructions.md`](../.github/instructions/stack-sprint2.instructions.md)
+- Política de Git: [`git-commit-policy.mdc`](../.cursor/rules/git-commit-policy.mdc)
+  e [`git-commit-policy.instructions.md`](../.github/instructions/git-commit-policy.instructions.md)
+
+Toda alteração no projeto deve atualizar este documento na mesma entrega,
+mantendo o comportamento, os comandos, os endpoints, as pendências e as
+evidências sincronizados. Informações sensíveis, como senhas, tokens e chaves
+privadas, não devem ser registradas.
+
+## 10. Política de Git
+
+Commits e pushes só devem ser realizados mediante solicitação explícita. Quando
+solicitados, devem ser criados sem trailers de coautoria, incluindo
+`Co-authored-by`. Antes do commit, os arquivos staged devem ser revisados e o
+`git diff --check` deve ser executado. Arquivos `.env` e demais credenciais não
+podem ser versionados.

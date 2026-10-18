@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Café PI - Web
 
-## Getting Started
+Front-end web em Next.js App Router, integrado à API NestJS. A mesma API e os
+mesmos contratos tipados da camada `src/lib/api.ts` devem ser reutilizados pelo
+futuro aplicativo React Native/Expo.
 
-First, run the development server:
+## Configuração
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Crie `web/.env.local` a partir de `.env.example`:
+
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O valor deve apontar para uma API acessível pelo navegador. No futuro mobile,
+use a URL acessível pelo dispositivo ou emulador, não `localhost` do computador
+quando essa URL não estiver disponível no dispositivo.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Execução
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+A aplicação fica disponível em `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+O fluxo atual inclui:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- login real em `POST /auth/login`;
+- sessão JWT armazenada no navegador para o protótipo;
+- proteção do dashboard sem sessão;
+- regiões reais de `GET /regioes`;
+- clima de `GET /clima/:regiaoId`;
+- safras de `GET /safra/:regiaoId`;
+- perfil preliminar de `GET /clusters`;
+- logout e tratamento de carregamento, vazio e erro.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Validação
 
-## Deploy on Vercel
+```bash
+npm run lint
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contrato para o mobile
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O mobile deverá enviar o mesmo cabeçalho para rotas privadas:
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Os tipos de resposta e os caminhos estão centralizados em
+`src/lib/api.ts`. O mobile deve manter a URL da API em configuração própria
+de ambiente e consumir a API NestJS, sem duplicar regras de negócio.
