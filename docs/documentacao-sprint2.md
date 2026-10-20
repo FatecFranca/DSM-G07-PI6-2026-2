@@ -247,16 +247,9 @@ O desenvolvimento deve permanecer centralizado no repositório oficial do
 grupo no GitHub. Cada integrante deve possuir contribuições identificáveis
 relacionadas às atividades da sprint.
 
-### 4.1. Registro de contribuições
 
-| Integrante | Atividade | Branch ou commit | Evidência |
-| --- | --- | --- | --- |
-| A preencher | A preencher | A preencher | Link do GitHub |
-| A preencher | A preencher | A preencher | Link do GitHub |
-| A preencher | A preencher | A preencher | Link do GitHub |
-| A preencher | A preencher | A preencher | Link do GitHub |
 
-### 4.2. Boas práticas adotadas
+### 4 Boas práticas adotadas
 
 - Commits devem descrever a alteração realizada.
 - Cada integrante deve trabalhar em uma branch ou fluxo definido pelo grupo.
@@ -462,18 +455,7 @@ mantendo o comportamento, os comandos, os endpoints, as pendências e as
 evidências sincronizados. Informações sensíveis, como senhas, tokens e chaves
 privadas, não devem ser registradas.
 
-## 10. Política de Git
 
-Commits e pushes só devem ser realizados mediante solicitação explícita. Quando
-solicitados, devem ser criados sem trailers de coautoria, incluindo
-`Co-authored-by`. Antes do commit, os arquivos staged devem ser revisados e o
-`git diff --check` deve ser executado. Arquivos `.env` e demais credenciais não
-podem ser versionados.
-Os clientes Web e Mobile aceitam filtros opcionais de período para clima e ano
-para safra. A coleta externa permanece fora dos front-ends: NASA POWER é a
-fonte planejada para clima e CONAB via `agrobr` é a fonte planejada para safra.
-O rendimento da CONAB é publicado por UF e deve ser apresentado como
-referência agregada regional.
 
 O back-end disponibiliza `npm run data:import -- clima.csv safra.csv
 regiao-uf.csv` para importar arquivos tratados. O importador valida regiões,
