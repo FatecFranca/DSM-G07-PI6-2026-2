@@ -4,12 +4,12 @@ import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 export class CreateSafraDto {
   @ApiProperty()
   @IsString()
-  regiaoId: string;
+  regiaoId!: string;
 
   @ApiProperty({ example: 2026 })
   @IsInt()
   @Min(1900)
-  anoColheita: number;
+  anoColheita!: number;
 
   @ApiPropertyOptional({ example: 240 })
   @IsOptional()

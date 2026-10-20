@@ -21,6 +21,7 @@ código correspondentes antes da entrega.
 | --- | --- | --- |
 | Back-end com endpoints básicos da API implementados (CRUD) | Concluído no ambiente local | Seção 1 |
 | Front-end parcialmente integrado ao back-end | Implementado no Web | Seção 2 |
+| Aplicativo mobile consumindo a API | Em implementação | Seção 2 |
 | Banco de dados implementado e populado com dados de teste | Concluído no ambiente local | Seção 3 |
 | Commits ativos de todos os integrantes no GitHub | Em validação | Seção 4 |
 | Ambiente em nuvem criado, mesmo que parcialmente | Em validação | Seção 5 |
@@ -36,6 +37,11 @@ O `backend/tsconfig.json` considera somente `backend/src`, que corresponde ao
 `backend/test/` e usam a configuração específica do Jest em
 `backend/test/jest-e2e.json`. Essa separação elimina o diagnóstico do
 TypeScript sobre `app.e2e-spec.ts` estar fora do `rootDir`.
+
+Os campos obrigatórios do `CreateSafraDto` usam a asserção de atribuição
+definitiva (`!`). O NestJS preenche esses campos a partir do payload validado
+em tempo de execução; a anotação informa essa garantia ao TypeScript sem
+alterar a validação do `class-validator`.
 
 ---
 
@@ -143,6 +149,22 @@ Inserir nesta seção:
 > no README do Web para reutilização futura.
 
 ---
+
+### 2.4. Base inicial do aplicativo mobile
+
+Foi criado o projeto Expo em `mobile/`, com TypeScript, configuração por
+`EXPO_PUBLIC_API_URL`, login, consulta de regiões, logout e armazenamento
+seguro do JWT usando `expo-secure-store`. O CRUD de `ADMIN` e `TECNICO`, as
+telas de detalhe e a extração final dos contratos compartilhados permanecem
+pendentes.
+
+### 2.5. Arquivos de ambiente locais
+
+Foram criados arquivos `.env` locais a partir dos exemplos nas pastas
+`backend/`, `web/`, `analytics/` e `mobile/`. Esses arquivos não devem ser
+versionados e não devem conter credenciais reais na documentação. O
+`backend/.env` que já existia foi preservado para não sobrescrever a
+configuração local.
 
 ## 3. Banco de Dados e Dados de Teste
 
@@ -340,6 +362,11 @@ Registrar nesta seção tudo que não foi concluído na Sprint 2 e que deverá s
 tratado na próxima entrega.
 
 - Completar a integração das telas restantes do front-end.
+- Completar a integração das telas restantes do Web e validar o fluxo no
+  navegador com dados reais.
+- Implementar no Mobile as telas de detalhe e CRUD para `ADMIN` e `TECNICO`;
+  `PRODUTOR` permanece somente leitura.
+- Extrair os contratos HTTP para um módulo compartilhado entre Web e Mobile.
 - Consolidar os endpoints CRUD que ainda estiverem pendentes.
 - Automatizar ou revisar a carga dos dados de teste.
 - Evoluir a configuração do ambiente em nuvem.
