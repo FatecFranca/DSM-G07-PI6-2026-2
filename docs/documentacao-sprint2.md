@@ -17,16 +17,33 @@ sprint e relaciona cada item às evidências que devem ser anexadas ao relatóri
 Os campos de evidência devem ser preenchidos com os prints, links ou trechos de
 código correspondentes antes da entrega.
 
+O índice de evidências reproduzíveis está em
+[`docs/evidencias/README.md`](./evidencias/README.md). Os arquivos de validação
+registram comandos e resultados reais; prints de Swagger, telas, banco e nuvem
+devem ser anexados sem expor credenciais.
+
+Já foram capturadas duas evidências visuais locais:
+[`swagger-api.png`](./evidencias/swagger-api.png) e
+[`dashboard-web.png`](./evidencias/dashboard-web.png). Permanecem pendentes
+os prints do Mobile, banco, coleta real, ambiente em nuvem e histórico do
+GitHub.
+
+O [README principal](../README.md) consolida os comandos de execução, endpoints,
+arquitetura, critérios de prints, trechos de código recomendados e modelo para
+registrar cada evidência. Este documento permanece como o registro detalhado
+do estado da Sprint 2.
+
 | Entrega prevista | Status | Evidência |
 | --- | --- | --- |
-| Back-end com endpoints básicos da API implementados (CRUD) | Concluído no ambiente local | Seção 1 |
-| Front-end parcialmente integrado ao back-end | Implementado no Web | Seção 2 |
-| Banco de dados implementado e populado com dados de teste | Concluído no ambiente local | Seção 3 |
-| Commits ativos de todos os integrantes no GitHub | Em validação | Seção 4 |
-| Ambiente em nuvem criado, mesmo que parcialmente | Em validação | Seção 5 |
-| Documentação da configuração inicial da nuvem | Em validação | Seção 5 |
-| Coleta e tratamento dos dados | Em validação | Seção 6 |
-| Aplicação de técnica inicial de mineração de dados | Implementado preliminarmente | Seção 6 |
+| Back-end com endpoints básicos da API implementados (CRUD) | Concluído no ambiente local | [E-01](./evidencias/README.md#e-01--back-end) |
+| Front-end parcialmente integrado ao back-end | Integrado no Web | [E-02](./evidencias/README.md#e-02--web-integrado) |
+| Aplicativo mobile consumindo a API | Integrado para consulta | [E-03](./evidencias/README.md#e-03--mobile-integrado) |
+| Banco de dados implementado e populado com dados de teste | Concluído no ambiente local | [E-04](./evidencias/README.md#e-04--banco-de-dados) |
+| Commits ativos de todos os integrantes no GitHub | Histórico local registrado; confirmação no GitHub pendente | [E-05](./evidencias/README.md#e-05--commits) |
+| Ambiente em nuvem criado, mesmo que parcialmente | Pendente de configuração externa | [E-06](./evidencias/README.md#e-06--nuvem) |
+| Documentação da configuração inicial da nuvem | Pendente de configuração externa | [E-06](./evidencias/README.md#e-06--nuvem) |
+| Coleta e tratamento dos dados | Scripts validados; coleta real pendente | [E-07](./evidencias/README.md#e-07-e-e-08--analytics) |
+| Aplicação de técnica inicial de mineração de dados | Implementado preliminarmente | [E-08](./evidencias/README.md#e-07-e-e-08--analytics) |
 | Documentação intermediária atualizada com evidências | Atualizada | Este documento |
 
 ### Nota de compilação do back-end
@@ -36,6 +53,11 @@ O `backend/tsconfig.json` considera somente `backend/src`, que corresponde ao
 `backend/test/` e usam a configuração específica do Jest em
 `backend/test/jest-e2e.json`. Essa separação elimina o diagnóstico do
 TypeScript sobre `app.e2e-spec.ts` estar fora do `rootDir`.
+
+Os campos obrigatórios do `CreateSafraDto` usam a asserção de atribuição
+definitiva (`!`). O NestJS preenche esses campos a partir do payload validado
+em tempo de execução; a anotação informa essa garantia ao TypeScript sem
+alterar a validação do `class-validator`.
 
 ---
 
@@ -109,9 +131,9 @@ ainda utilizam dados estáticos ou aguardam integração.
 | --- | --- | --- |
 | Login | Integrado | `POST /auth/login`, sessão JWT no Web |
 | Lista de regiões | Integrado | `GET /regioes` |
-| Condições climáticas | Integrado | `GET /clima/:regiaoId` |
-| Dados de safra | Integrado | `GET /safra/:regiaoId` |
-| Dashboard | Integrado parcialmente | Clima, safra e clusters; gráficos continuam pendentes |
+| Condições climáticas | Integrado | `GET /clima/:regiaoId?de=YYYY-MM-DD&ate=YYYY-MM-DD` |
+| Dados de safra | Integrado | `GET /safra/:regiaoId?ano=YYYY` |
+| Dashboard | Integrado | Clima, safra e clusters com filtros, séries visuais e estados de carregamento, vazio e erro |
 
 ### 2.2. Critérios técnicos
 
@@ -138,11 +160,40 @@ Inserir nesta seção:
 
 > O cliente tipado está em `web/src/lib/api.ts`, a sessão em
 > `web/src/lib/session.ts` e a URL da API em `web/.env.example`. O Web foi
-> validado com `npm run lint` e `npm run build`. O aplicativo mobile ainda não
-> foi criado; seus contratos, Bearer token e URL configurável estão documentados
-> no README do Web para reutilização futura.
+> validado com `npm run lint` e `npm run build`. O aplicativo mobile está em
+> `mobile/`, com cliente HTTP, sessão segura, consulta de regiões e detalhes
+> de clima e safra por região.
 
 ---
+
+### 2.4. Base inicial do aplicativo mobile
+
+Foi criado o projeto Expo em `mobile/`, com TypeScript, configuração por
+`EXPO_PUBLIC_API_URL`, login, consulta de regiões, logout, armazenamento
+seguro do JWT usando `expo-secure-store` e detalhe integrado de clima e safra
+por região. O CRUD de `ADMIN` e `TECNICO` e a extração final dos contratos
+compartilhados permanecem pendentes.
+
+O Web e o Mobile consultam a mesma API NestJS. O Web apresenta filtros por
+período de clima e ano de safra, indicadores agregados, série visual de
+temperatura e histórico de rendimento. O Mobile apresenta a seleção de região
+e os detalhes mais recentes de clima e safra, incluindo o aviso de que o
+rendimento da CONAB é agregado por UF.
+
+### 2.5. Hidratação do dashboard Web
+
+O dashboard aguarda a hidratação do cliente antes de ler a sessão do
+`localStorage` ou redirecionar usuários sem autenticação. Isso evita que o
+HTML inicial do servidor seja diferente do HTML produzido no navegador quando
+já existe uma sessão salva.
+
+### 2.5. Arquivos de ambiente locais
+
+Foram criados arquivos `.env` locais a partir dos exemplos nas pastas
+`backend/`, `web/`, `analytics/` e `mobile/`. Esses arquivos não devem ser
+versionados e não devem conter credenciais reais na documentação. O
+`backend/.env` que já existia foi preservado para não sobrescrever a
+configuração local.
 
 ## 3. Banco de Dados e Dados de Teste
 
@@ -196,16 +247,9 @@ O desenvolvimento deve permanecer centralizado no repositório oficial do
 grupo no GitHub. Cada integrante deve possuir contribuições identificáveis
 relacionadas às atividades da sprint.
 
-### 4.1. Registro de contribuições
 
-| Integrante | Atividade | Branch ou commit | Evidência |
-| --- | --- | --- | --- |
-| A preencher | A preencher | A preencher | Link do GitHub |
-| A preencher | A preencher | A preencher | Link do GitHub |
-| A preencher | A preencher | A preencher | Link do GitHub |
-| A preencher | A preencher | A preencher | Link do GitHub |
 
-### 4.2. Boas práticas adotadas
+### 4 Boas práticas adotadas
 
 - Commits devem descrever a alteração realizada.
 - Cada integrante deve trabalhar em uma branch ou fluxo definido pelo grupo.
@@ -259,17 +303,39 @@ Documentar, em ordem, os passos necessários para reproduzir a configuração:
 
 ### 5.3. Evidências
 
-Inserir nesta seção:
+As evidências desta seção devem demonstrar a configuração efetivamente
+publicada. Como o ambiente remoto ainda não foi configurado nesta entrega, não
+há print ou endpoint público a declarar como concluído.
 
-- print do recurso criado no provedor;
-- print do serviço em execução;
-- trecho do arquivo de configuração ou pipeline;
-- resposta de um endpoint publicado;
-- descrição dos custos, limites ou restrições do ambiente.
+Para finalizar este critério, anexar:
+
+- print do recurso criado no provedor, com identificadores sensíveis ocultados;
+- print do serviço em execução e do status de saúde;
+- trecho do arquivo de configuração ou pipeline de implantação, sem segredos;
+- resposta de um endpoint público, preferencialmente `GET /api` ou uma rota
+  autenticada com o token removido;
+- descrição do custo estimado, limites do plano, período de disponibilidade,
+  limites de armazenamento e restrições de rede.
 
 **Evidências da equipe:**
 
-> Inserir prints e links sem expor credenciais ou informações privadas.
+> **Status atual:** pendente de configuração externa.
+>
+> A execução local validada não substitui a evidência de nuvem. O ambiente
+> local possui PostgreSQL em Docker, API NestJS na porta `3001` e Web Next.js
+> na porta `3000`. Os comandos e resultados locais estão registrados em
+> [`docs/evidencias/README.md`](./evidencias/README.md), mas não devem ser
+> apresentados como publicação em provedor.
+>
+> Após a publicação, registrar aqui os links para os arquivos:
+>
+> - `docs/evidencias/nuvem-recurso.png`;
+> - `docs/evidencias/nuvem-servico.png`;
+> - `docs/evidencias/nuvem-endpoint.txt`;
+> - `docs/evidencias/nuvem-configuracao.txt`.
+>
+> Não registrar senhas, tokens, chaves privadas, connection strings completas
+> ou dados pessoais nos prints e arquivos de evidência.
 
 ---
 
@@ -330,7 +396,9 @@ Inserir nesta seção:
 > Inserir prints, links para notebooks/scripts ou referências aos commits.
 
 > A API disponibiliza `GET /clusters`, protegido por JWT, com agrupamento
-> preliminar K-Means (`k=2`) sobre a temperatura média das regiões.
+> preliminar K-Means (`k=2`) sobre médias de temperatura, precipitação,
+> umidade e radiação solar. O resultado é exploratório; a qualidade do cluster
+> ainda deve ser calculada e registrada pelo pipeline analítico.
 
 ---
 
@@ -340,8 +408,21 @@ Registrar nesta seção tudo que não foi concluído na Sprint 2 e que deverá s
 tratado na próxima entrega.
 
 - Completar a integração das telas restantes do front-end.
+- Completar a integração das telas restantes do Web e validar o fluxo no
+  navegador com dados reais.
+- Implementar no Mobile as telas de detalhe e CRUD para `ADMIN` e `TECNICO`;
+  `PRODUTOR` permanece somente leitura.
+- Extrair os contratos HTTP para um módulo compartilhado entre Web e Mobile.
 - Consolidar os endpoints CRUD que ainda estiverem pendentes.
 - Automatizar ou revisar a carga dos dados de teste.
+- Executar e validar a coleta de clima em
+  `analytics/scripts/coletar_nasa_power.py`.
+- Executar e validar a coleta de safra em
+  `analytics/scripts/coletar_conab.py`, incluindo a correspondência entre UF e
+  região produtora.
+- Registrar proveniência, período e unidades persistidas nos arquivos tratados;
+  o importador idempotente já está disponível em `backend/scripts/`.
+- Adicionar gráficos e filtros de período/ano no dashboard após a carga validada.
 - Evoluir a configuração do ambiente em nuvem.
 - Integrar os resultados da mineração à API, quando aplicável.
 - Preparar a técnica preditiva prevista para a Sprint 3.
@@ -374,10 +455,10 @@ mantendo o comportamento, os comandos, os endpoints, as pendências e as
 evidências sincronizados. Informações sensíveis, como senhas, tokens e chaves
 privadas, não devem ser registradas.
 
-## 10. Política de Git
 
-Commits e pushes só devem ser realizados mediante solicitação explícita. Quando
-solicitados, devem ser criados sem trailers de coautoria, incluindo
-`Co-authored-by`. Antes do commit, os arquivos staged devem ser revisados e o
-`git diff --check` deve ser executado. Arquivos `.env` e demais credenciais não
-podem ser versionados.
+
+O back-end disponibiliza `npm run data:import -- clima.csv safra.csv
+regiao-uf.csv` para importar arquivos tratados. O importador valida regiões,
+atualiza clima por `regiaoId + data` e faz upsert de safra por
+`regiaoId + anoColheita`; o arquivo `regiao-uf.csv` torna explícita a
+correspondência entre a UF agregada da CONAB e a região produtora.

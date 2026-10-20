@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -18,7 +19,11 @@ import { ClimaService } from './clima.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { CreateClimaDto, UpdateClimaDto } from './dto/clima.dto';
+import {
+  ClimaQueryDto,
+  CreateClimaDto,
+  UpdateClimaDto,
+} from './dto/clima.dto';
 
 @ApiTags('clima')
 @ApiBearerAuth()
@@ -28,10 +33,15 @@ export class ClimaController {
   constructor(private readonly climaService: ClimaService) {}
 
   @Get(':regiaoId')
-  @ApiOperation({ summary: 'Histórico climático da região' })
+  @ApiOperation({
+    summary: 'Histórico climático da região com filtro opcional de período',
+  })
   @ApiParam({ name: 'regiaoId' })
-  findByRegiao(@Param('regiaoId') regiaoId: string) {
-    return this.climaService.findByRegiao(regiaoId);
+  findByRegiao(
+    @Param('regiaoId') regiaoId: string,
+    @Query() query: ClimaQueryDto,
+  ) {
+    return this.climaService.findByRegiao(regiaoId, query);
   }
 
   @Post()

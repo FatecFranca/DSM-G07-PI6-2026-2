@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -18,7 +19,11 @@ import { SafraService } from './safra.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { CreateSafraDto, UpdateSafraDto } from './dto/safra.dto';
+import {
+  CreateSafraDto,
+  SafraQueryDto,
+  UpdateSafraDto,
+} from './dto/safra.dto';
 
 @ApiTags('safra')
 @ApiBearerAuth()
@@ -28,10 +33,15 @@ export class SafraController {
   constructor(private readonly safraService: SafraService) {}
 
   @Get(':regiaoId')
-  @ApiOperation({ summary: 'Histórico de rendimento (t/ha) da região' })
+  @ApiOperation({
+    summary: 'Histórico de rendimento (t/ha) com filtro opcional de ano',
+  })
   @ApiParam({ name: 'regiaoId' })
-  findByRegiao(@Param('regiaoId') regiaoId: string) {
-    return this.safraService.findByRegiao(regiaoId);
+  findByRegiao(
+    @Param('regiaoId') regiaoId: string,
+    @Query() query: SafraQueryDto,
+  ) {
+    return this.safraService.findByRegiao(regiaoId, query);
   }
 
   @Post()

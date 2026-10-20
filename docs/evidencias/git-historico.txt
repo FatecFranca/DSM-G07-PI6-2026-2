@@ -1,0 +1,20 @@
+E-05 — Histórico Git local
+Data: 2026-10-20
+
+9812828|Vincius Araujo|feat: finaliza integracao do frontend e documentacao
+b264cbc|Patricia Nogueira|feat(web): adicionando telas de clima e safra no dashboard
+5177439|Vincius Araujo|feat: inicia aplicativo mobile expo
+6cfaef4|Pauloricardo1808|Merge branch 'main'
+438a786|Pauloricardo1808|ML updated
+cef6795|Vincius Araujo|feat: integra web com api e corrige build do backend
+252ece6|Vincius Araujo|feat: implementa backend da sprint 2
+be2caba|Pauloricardo1808|feat: adiciona módulo ML de clima, correlação, K-Means e regressão
+216c0b4|ThiagoArchete|docs(sprint): alterar pequenos detalhes da documentação final da primeira sprint
+269a17d|Alexandre Gomes da Silva|Initial commit
+
+Comando usado:
+  git log --pretty=format:"%h|%an|%ad|%s" --date=short
+
+Observação:
+  A confirmação formal de commits ativos de todos os integrantes deve ser
+  conferida no GitHub com os autores oficiais da equipe.

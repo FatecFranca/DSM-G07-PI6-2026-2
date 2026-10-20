@@ -59,18 +59,24 @@ rotas abaixo, exceto login e cadastro, exigem `Authorization: Bearer <token>`.
 | `POST` | `/regioes` | ADMIN/TECNICO | Cria região |
 | `PATCH` | `/regioes/:id` | ADMIN/TECNICO | Atualiza região |
 | `DELETE` | `/regioes/:id` | ADMIN | Remove região |
-| `GET` | `/clima/:regiaoId` | Autenticado | Lista condições climáticas |
+| `GET` | `/clima/:regiaoId?de=YYYY-MM-DD&ate=YYYY-MM-DD` | Autenticado | Lista condições climáticas, opcionalmente filtradas por período |
 | `POST` | `/clima` | ADMIN/TECNICO | Cria condição climática |
 | `PATCH` | `/clima/:id` | ADMIN/TECNICO | Atualiza condição climática |
 | `DELETE` | `/clima/:id` | ADMIN | Remove condição climática |
-| `GET` | `/safra/:regiaoId` | Autenticado | Lista rendimentos |
+| `GET` | `/safra/:regiaoId?ano=YYYY` | Autenticado | Lista rendimentos, opcionalmente filtrados por ano |
 | `POST` | `/safra` | ADMIN/TECNICO | Cria rendimento |
 | `PATCH` | `/safra/:id` | ADMIN/TECNICO | Atualiza rendimento |
 | `DELETE` | `/safra/:id` | ADMIN | Remove rendimento |
-| `GET` | `/clusters` | Autenticado | Retorna cluster preliminar por temperatura |
+| `GET` | `/clusters` | Autenticado | Retorna cluster climático preliminar por quatro variáveis |
 
-`GET /clusters` usa K-Means com `k=2` sobre a temperatura média disponível
-para cada região. O endpoint de predições permanece reservado para a Sprint 3.
+`GET /clusters` usa agrupamento preliminar com `k=2` sobre temperatura,
+precipitação, umidade e radiação solar. O endpoint de predições permanece
+reservado para a Sprint 3.
+
+Os dados de clima planejados são coletados pela NASA POWER. Os dados de safra
+serão coletados da CONAB pelo pacote de terceiros `agrobr`, convertendo
+produtividade de kg/ha para toneladas/ha. O rendimento da CONAB é agregado por
+UF e deve ser apresentado como referência regional, não como medição individual.
 
 ## Scripts
 
@@ -80,6 +86,7 @@ npm run lint           # executa o ESLint
 npm run test           # testes unitários
 npm run test:e2e       # testes de integração
 npm run prisma:seed    # popula dados locais de forma reproduzível
+npm run data:import -- clima.csv safra.csv regiao-uf.csv # importa CSVs tratados
 ```
 
 O `tsconfig.json` do back-end inclui somente `src`, que é o diretório de
@@ -88,3 +95,8 @@ Jest usando `test/jest-e2e.json`, evitando o diagnóstico de arquivos fora do
 `rootDir` no editor e no build da API.
 
 Não versionar `.env`, credenciais, tokens ou arquivos de dados sensíveis.
+
+`data:import` valida a existência das regiões, atualiza condições climáticas
+pela combinação `regiaoId + data` e faz upsert de safras pela chave
+`regiaoId + anoColheita`. O terceiro CSV deve conter `regiaoId,uf` e explicitar
+o mapeamento estadual usado para associar a publicação agregada da CONAB.

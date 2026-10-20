@@ -6,6 +6,9 @@ interface RegionProfile {
   nomeRegiao: string;
   pais: string;
   temperaturaMedia: number;
+  precipitacaoMedia: number;
+  umidadeMedia: number;
+  radiacaoSolarMedia: number;
   quantidadeObservacoes: number;
 }
 
@@ -15,28 +18,48 @@ export class ClustersService {
 
   async findAll() {
     const regioes = await this.prisma.regiaoProdutora.findMany({
-      include: { condicoes: { select: { temperaturaMedia: true } } },
+      include: {
+        condicoes: {
+          select: {
+            temperaturaMedia: true,
+            precipitacao: true,
+            umidade: true,
+            radiacaoSolar: true,
+          },
+        },
+      },
       orderBy: { nomeRegiao: 'asc' },
     });
 
     const perfis: RegionProfile[] = regioes
       .map((regiao) => {
-        const temperaturas = regiao.condicoes
-          .map((condicao) => condicao.temperaturaMedia)
-          .filter((temperatura): temperatura is number => temperatura !== null);
-        if (!temperaturas.length) {
+        const observacoes = regiao.condicoes.filter(
+          (condicao) =>
+            condicao.temperaturaMedia !== null &&
+            condicao.precipitacao !== null &&
+            condicao.umidade !== null &&
+            condicao.radiacaoSolar !== null,
+        );
+        if (!observacoes.length) {
           return null;
         }
         return {
           regiaoId: regiao.id,
           nomeRegiao: regiao.nomeRegiao,
           pais: regiao.pais,
-          temperaturaMedia:
-            temperaturas.reduce(
-              (total, temperatura) => total + temperatura,
-              0,
-            ) / temperaturas.length,
-          quantidadeObservacoes: temperaturas.length,
+          temperaturaMedia: this.average(
+            observacoes.map((item) => item.temperaturaMedia as number),
+          ),
+          precipitacaoMedia: this.average(
+            observacoes.map((item) => item.precipitacao as number),
+          ),
+          umidadeMedia: this.average(
+            observacoes.map((item) => item.umidade as number),
+          ),
+          radiacaoSolarMedia: this.average(
+            observacoes.map((item) => item.radiacaoSolar as number),
+          ),
+          quantidadeObservacoes: observacoes.length,
         };
       })
       .filter((perfil): perfil is RegionProfile => perfil !== null);
@@ -45,20 +68,26 @@ export class ClustersService {
       return {
         algoritmo: 'K-Means',
         k: 2,
-        variaveis: ['temperaturaMedia'],
+        variaveis: [
+          'temperaturaMedia',
+          'precipitacaoMedia',
+          'umidadeMedia',
+          'radiacaoSolarMedia',
+        ],
         clusters: [],
         totalRegioes: 0,
+        qualidade: null,
       };
     }
 
     const centroides = this.calculateCentroids(perfis);
     const clusters = centroides.map((centroide, cluster) => ({
       cluster,
-      centroideTemperaturaMedia: Number(centroide.toFixed(4)),
+      centroide: this.serializeProfile(centroide),
       regioes: perfis
         .filter(
           (perfil) =>
-            this.nearestCentroid(perfil.temperaturaMedia, centroides) ===
+            this.nearestCentroid(perfil, centroides) ===
             cluster,
         )
         .map((perfil) => ({
@@ -70,30 +99,39 @@ export class ClustersService {
     return {
       algoritmo: 'K-Means',
       k: centroides.length,
-      variaveis: ['temperaturaMedia'],
+      variaveis: [
+        'temperaturaMedia',
+        'precipitacaoMedia',
+        'umidadeMedia',
+        'radiacaoSolarMedia',
+      ],
       clusters,
       totalRegioes: perfis.length,
+      qualidade: {
+        metrica: 'silhouette',
+        valor: null,
+        observacao: 'Calcule a métrica no pipeline analítico com dados processados.',
+      },
     };
   }
 
-  private calculateCentroids(perfis: RegionProfile[]): number[] {
-    const values = perfis.map((perfil) => perfil.temperaturaMedia);
-    if (values.length === 1 || new Set(values).size === 1) {
-      return [values[0]];
+  private calculateCentroids(perfis: RegionProfile[]): RegionProfile[] {
+    if (perfis.length === 1) {
+      return [perfis[0]];
     }
 
-    let centroids = [Math.min(...values), Math.max(...values)];
+    let centroids = [perfis[0], perfis[perfis.length - 1]];
     for (let iteration = 0; iteration < 20; iteration += 1) {
-      const groups = centroids.map(() => [] as number[]);
-      for (const value of values) {
-        groups[this.nearestCentroid(value, centroids)].push(value);
+      const groups = centroids.map(() => [] as RegionProfile[]);
+      for (const perfil of perfis) {
+        groups[this.nearestCentroid(perfil, centroids)].push(perfil);
       }
       const updated = groups.map((group, index) =>
         group.length
-          ? group.reduce((sum, value) => sum + value, 0) / group.length
+          ? this.averageProfile(group)
           : centroids[index],
       );
-      if (updated.every((value, index) => value === centroids[index])) {
+      if (updated.every((value, index) => this.distance(value, centroids[index]) < 0.0001)) {
         break;
       }
       centroids = updated;
@@ -101,13 +139,48 @@ export class ClustersService {
     return centroids;
   }
 
-  private nearestCentroid(value: number, centroids: number[]): number {
+  private nearestCentroid(value: RegionProfile, centroids: RegionProfile[]): number {
     return centroids.reduce(
       (nearest, centroid, index) =>
-        Math.abs(value - centroid) < Math.abs(value - centroids[nearest])
+        this.distance(value, centroid) < this.distance(value, centroids[nearest])
           ? index
           : nearest,
       0,
     );
+  }
+
+  private average(values: number[]) {
+    return values.reduce((total, value) => total + value, 0) / values.length;
+  }
+
+  private averageProfile(group: RegionProfile[]): RegionProfile {
+    return {
+      ...group[0],
+      temperaturaMedia: this.average(group.map((item) => item.temperaturaMedia)),
+      precipitacaoMedia: this.average(group.map((item) => item.precipitacaoMedia)),
+      umidadeMedia: this.average(group.map((item) => item.umidadeMedia)),
+      radiacaoSolarMedia: this.average(group.map((item) => item.radiacaoSolarMedia)),
+      quantidadeObservacoes: Math.round(
+        this.average(group.map((item) => item.quantidadeObservacoes)),
+      ),
+    };
+  }
+
+  private distance(left: RegionProfile, right: RegionProfile) {
+    return Math.sqrt(
+      ((left.temperaturaMedia - right.temperaturaMedia) / 50) ** 2 +
+        ((left.precipitacaoMedia - right.precipitacaoMedia) / 3000) ** 2 +
+        ((left.umidadeMedia - right.umidadeMedia) / 100) ** 2 +
+        ((left.radiacaoSolarMedia - right.radiacaoSolarMedia) / 30) ** 2,
+    );
+  }
+
+  private serializeProfile(profile: RegionProfile) {
+    return {
+      temperaturaMedia: Number(profile.temperaturaMedia.toFixed(4)),
+      precipitacaoMedia: Number(profile.precipitacaoMedia.toFixed(4)),
+      umidadeMedia: Number(profile.umidadeMedia.toFixed(4)),
+      radiacaoSolarMedia: Number(profile.radiacaoSolarMedia.toFixed(4)),
+    };
   }
 }

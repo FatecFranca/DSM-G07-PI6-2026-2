@@ -1,14 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateClimaDto, UpdateClimaDto } from './dto/clima.dto';
+import {
+  ClimaQueryDto,
+  CreateClimaDto,
+  UpdateClimaDto,
+} from './dto/clima.dto';
 
 @Injectable()
 export class ClimaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByRegiao(regiaoId: string) {
+  findByRegiao(regiaoId: string, query: ClimaQueryDto = {}) {
+    const data = {
+      ...(query.de || query.ate
+        ? {
+            gte: query.de ? new Date(query.de) : undefined,
+            lte: query.ate ? new Date(`${query.ate}T23:59:59.999Z`) : undefined,
+          }
+        : {}),
+    };
+
     return this.prisma.condicaoClimatica.findMany({
-      where: { regiaoId },
+      where: { regiaoId, ...(Object.keys(data).length > 0 ? { data } : {}) },
       orderBy: { data: 'asc' },
     });
   }

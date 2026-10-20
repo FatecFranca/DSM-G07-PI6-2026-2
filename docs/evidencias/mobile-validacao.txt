@@ -1,0 +1,20 @@
+E-03 — Validação do Mobile
+Data: 2026-10-20
+
+Comando:
+  cd mobile
+  npx tsc --noEmit
+
+Resultado:
+  TypeScript: aprovado
+
+Funcionalidades cobertas:
+  login;
+  sessão segura com expo-secure-store;
+  lista de regiões;
+  consulta de clima;
+  consulta de safra;
+  estados de carregamento, erro e vazio.
+
+Prints ainda necessários:
+  login, lista de regiões e detalhe de uma região.

@@ -1,0 +1,23 @@
+E-02 — Validação do Web
+Data: 2026-10-20
+
+Comandos:
+  cd web
+  npm run lint
+  npm run build
+
+Resultado:
+  ESLint: aprovado
+  Next.js build: aprovado
+  Dashboard gerado: /dashboard
+
+Funcionalidades cobertas:
+  filtros de clima por período;
+  filtro de safra por ano;
+  indicadores;
+  série visual de temperatura;
+  histórico de safra;
+  clusters e estados vazio/erro/carregamento.
+
+Prints ainda necessários:
+  login, dashboard, Network e filtros preenchidos.

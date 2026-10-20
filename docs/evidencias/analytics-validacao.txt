@@ -1,0 +1,18 @@
+E-07 / E-08 — Validação do módulo analítico
+Data: 2026-10-20
+
+Comando:
+  cd analytics
+  python -m py_compile scripts\coletar_nasa_power.py scripts\coletar_conab.py
+
+Resultado:
+  Scripts Python: compilados sem erro
+
+Fontes:
+  clima: NASA POWER;
+  safra: CONAB via agrobr;
+  conversão: kg/ha para t/ha dividindo por 1000.
+
+Limitação:
+  A coleta real e os CSVs tratados ainda precisam ser executados e anexados.
+  O cluster atual é preliminar e usa quatro variáveis climáticas.
