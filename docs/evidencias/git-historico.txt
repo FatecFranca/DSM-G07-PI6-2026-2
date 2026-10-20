@@ -2,6 +2,7 @@ E-05 — Histórico Git local
 Data: 2026-10-20
 
 9812828|Vincius Araujo|feat: finaliza integracao do frontend e documentacao
+b264cbc|Patricia Nogueira|feat(web): adicionando telas de clima e safra no dashboard
 5177439|Vincius Araujo|feat: inicia aplicativo mobile expo
 6cfaef4|Pauloricardo1808|Merge branch 'main'
 438a786|Pauloricardo1808|ML updated
