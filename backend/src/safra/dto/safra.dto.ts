@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateSafraDto {
   @ApiProperty()
@@ -25,3 +31,11 @@ export class CreateSafraDto {
 }
 
 export class UpdateSafraDto extends PartialType(CreateSafraDto) {}
+
+export class SafraQueryDto {
+  @ApiPropertyOptional({ example: 2024 })
+  @IsOptional()
+  @IsInt()
+  @Min(1900)
+  ano?: number;
+}

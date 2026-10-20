@@ -80,10 +80,23 @@ export const api = {
   regioes(token: string) {
     return request<Regiao[]>('/regioes', {}, token);
   },
-  clima(regiaoId: string, token: string) {
-    return request<CondicaoClimatica[]>(`/clima/${regiaoId}`, {}, token);
+  clima(
+    regiaoId: string,
+    token: string,
+    filtros: { de?: string; ate?: string } = {},
+  ) {
+    const params = new URLSearchParams();
+    if (filtros.de) params.set('de', filtros.de);
+    if (filtros.ate) params.set('ate', filtros.ate);
+    const query = params.toString();
+    return request<CondicaoClimatica[]>(
+      `/clima/${regiaoId}${query ? `?${query}` : ''}`,
+      {},
+      token,
+    );
   },
-  safras(regiaoId: string, token: string) {
-    return request<SafraRendimento[]>(`/safra/${regiaoId}`, {}, token);
+  safras(regiaoId: string, token: string, ano?: number) {
+    const query = ano ? `?ano=${ano}` : '';
+    return request<SafraRendimento[]>(`/safra/${regiaoId}${query}`, {}, token);
   },
 };

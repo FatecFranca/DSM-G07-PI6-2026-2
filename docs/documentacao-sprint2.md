@@ -17,11 +17,16 @@ sprint e relaciona cada item às evidências que devem ser anexadas ao relatóri
 Os campos de evidência devem ser preenchidos com os prints, links ou trechos de
 código correspondentes antes da entrega.
 
+O [README principal](../README.md) consolida os comandos de execução, endpoints,
+arquitetura, critérios de prints, trechos de código recomendados e modelo para
+registrar cada evidência. Este documento permanece como o registro detalhado
+do estado da Sprint 2.
+
 | Entrega prevista | Status | Evidência |
 | --- | --- | --- |
 | Back-end com endpoints básicos da API implementados (CRUD) | Concluído no ambiente local | Seção 1 |
 | Front-end parcialmente integrado ao back-end | Implementado no Web | Seção 2 |
-| Aplicativo mobile consumindo a API | Em implementação | Seção 2 |
+| Aplicativo mobile consumindo a API | Integrado para consulta | Seção 2 |
 | Banco de dados implementado e populado com dados de teste | Concluído no ambiente local | Seção 3 |
 | Commits ativos de todos os integrantes no GitHub | Em validação | Seção 4 |
 | Ambiente em nuvem criado, mesmo que parcialmente | Em validação | Seção 5 |
@@ -115,9 +120,9 @@ ainda utilizam dados estáticos ou aguardam integração.
 | --- | --- | --- |
 | Login | Integrado | `POST /auth/login`, sessão JWT no Web |
 | Lista de regiões | Integrado | `GET /regioes` |
-| Condições climáticas | Integrado | `GET /clima/:regiaoId` |
-| Dados de safra | Integrado | `GET /safra/:regiaoId` |
-| Dashboard | Integrado parcialmente | Clima, safra e clusters; gráficos continuam pendentes |
+| Condições climáticas | Integrado | `GET /clima/:regiaoId?de=YYYY-MM-DD&ate=YYYY-MM-DD` |
+| Dados de safra | Integrado | `GET /safra/:regiaoId?ano=YYYY` |
+| Dashboard | Integrado | Clima, safra e clusters com filtros, séries visuais e estados de carregamento, vazio e erro |
 
 ### 2.2. Critérios técnicos
 
@@ -144,19 +149,32 @@ Inserir nesta seção:
 
 > O cliente tipado está em `web/src/lib/api.ts`, a sessão em
 > `web/src/lib/session.ts` e a URL da API em `web/.env.example`. O Web foi
-> validado com `npm run lint` e `npm run build`. O aplicativo mobile ainda não
-> foi criado; seus contratos, Bearer token e URL configurável estão documentados
-> no README do Web para reutilização futura.
+> validado com `npm run lint` e `npm run build`. O aplicativo mobile está em
+> `mobile/`, com cliente HTTP, sessão segura, consulta de regiões e detalhes
+> de clima e safra por região.
 
 ---
 
 ### 2.4. Base inicial do aplicativo mobile
 
 Foi criado o projeto Expo em `mobile/`, com TypeScript, configuração por
-`EXPO_PUBLIC_API_URL`, login, consulta de regiões, logout e armazenamento
-seguro do JWT usando `expo-secure-store`. O CRUD de `ADMIN` e `TECNICO`, as
-telas de detalhe e a extração final dos contratos compartilhados permanecem
-pendentes.
+`EXPO_PUBLIC_API_URL`, login, consulta de regiões, logout, armazenamento
+seguro do JWT usando `expo-secure-store` e detalhe integrado de clima e safra
+por região. O CRUD de `ADMIN` e `TECNICO` e a extração final dos contratos
+compartilhados permanecem pendentes.
+
+O Web e o Mobile consultam a mesma API NestJS. O Web apresenta filtros por
+período de clima e ano de safra, indicadores agregados, série visual de
+temperatura e histórico de rendimento. O Mobile apresenta a seleção de região
+e os detalhes mais recentes de clima e safra, incluindo o aviso de que o
+rendimento da CONAB é agregado por UF.
+
+### 2.5. Hidratação do dashboard Web
+
+O dashboard aguarda a hidratação do cliente antes de ler a sessão do
+`localStorage` ou redirecionar usuários sem autenticação. Isso evita que o
+HTML inicial do servidor seja diferente do HTML produzido no navegador quando
+já existe uma sessão salva.
 
 ### 2.5. Arquivos de ambiente locais
 
@@ -352,7 +370,9 @@ Inserir nesta seção:
 > Inserir prints, links para notebooks/scripts ou referências aos commits.
 
 > A API disponibiliza `GET /clusters`, protegido por JWT, com agrupamento
-> preliminar K-Means (`k=2`) sobre a temperatura média das regiões.
+> preliminar K-Means (`k=2`) sobre médias de temperatura, precipitação,
+> umidade e radiação solar. O resultado é exploratório; a qualidade do cluster
+> ainda deve ser calculada e registrada pelo pipeline analítico.
 
 ---
 
@@ -369,6 +389,14 @@ tratado na próxima entrega.
 - Extrair os contratos HTTP para um módulo compartilhado entre Web e Mobile.
 - Consolidar os endpoints CRUD que ainda estiverem pendentes.
 - Automatizar ou revisar a carga dos dados de teste.
+- Executar e validar a coleta de clima em
+  `analytics/scripts/coletar_nasa_power.py`.
+- Executar e validar a coleta de safra em
+  `analytics/scripts/coletar_conab.py`, incluindo a correspondência entre UF e
+  região produtora.
+- Registrar proveniência, período e unidades persistidas nos arquivos tratados;
+  o importador idempotente já está disponível em `backend/scripts/`.
+- Adicionar gráficos e filtros de período/ano no dashboard após a carga validada.
 - Evoluir a configuração do ambiente em nuvem.
 - Integrar os resultados da mineração à API, quando aplicável.
 - Preparar a técnica preditiva prevista para a Sprint 3.
@@ -408,3 +436,14 @@ solicitados, devem ser criados sem trailers de coautoria, incluindo
 `Co-authored-by`. Antes do commit, os arquivos staged devem ser revisados e o
 `git diff --check` deve ser executado. Arquivos `.env` e demais credenciais não
 podem ser versionados.
+Os clientes Web e Mobile aceitam filtros opcionais de período para clima e ano
+para safra. A coleta externa permanece fora dos front-ends: NASA POWER é a
+fonte planejada para clima e CONAB via `agrobr` é a fonte planejada para safra.
+O rendimento da CONAB é publicado por UF e deve ser apresentado como
+referência agregada regional.
+
+O back-end disponibiliza `npm run data:import -- clima.csv safra.csv
+regiao-uf.csv` para importar arquivos tratados. O importador valida regiões,
+atualiza clima por `regiaoId + data` e faz upsert de safra por
+`regiaoId + anoColheita`; o arquivo `regiao-uf.csv` torna explícita a
+correspondência entre a UF agregada da CONAB e a região produtora.

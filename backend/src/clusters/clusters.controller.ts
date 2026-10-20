@@ -12,7 +12,11 @@ export class ClustersController {
   constructor(private readonly clustersService: ClustersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Agrupa regiões por perfil climático preliminar' })
+  @ApiOperation({
+    summary: 'Agrupa regiões por perfil climático',
+    description:
+      'Calcula o agrupamento exploratório usando temperatura, precipitação, umidade e radiação solar médias.',
+  })
   findAll() {
     return this.clustersService.findAll();
   }

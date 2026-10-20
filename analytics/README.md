@@ -55,6 +55,22 @@ jupyter notebook
 
 Baixe os dois CSVs e salve em `data/raw/` com os nomes acima antes de rodar.
 
+## Fontes planejadas de produção
+
+Os scripts em `scripts/` separam a coleta externa do pipeline de notebooks:
+
+```bash
+python scripts/coletar_nasa_power.py --regions data/regions.csv \
+  --output data/processed/clima_nasa.csv --start 20240101 --end 20241231
+python scripts/coletar_conab.py --output data/processed/safra_conab.csv \
+  --safra 2024/25 --uf MG
+```
+
+`coletar_nasa_power.py` usa latitude/longitude e descarta respostas com
+sentinelas de ausência. `coletar_conab.py` usa `agrobr.sync.conab.safras` e
+converte a produtividade publicada em kg/ha para t/ha dividindo por 1000.
+Os arquivos processados não devem ser versionados sem revisão.
+
 ## Resultados de referência
 
 - Pré-processamento: 28 nulos em `Solar_Radiation` (interpolados), 231

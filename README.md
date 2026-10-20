@@ -1,121 +1,431 @@
-# DSM-G07-PI6-2026-2
+# Café PI — Grupo 07
 
-Repositório do **GRUPO 07** do Projeto Interdisciplinar do 6º semestre DSM 2026/2.
+Plataforma multiplataforma de mineração de dados agrícolas e climáticos do
+café, desenvolvida pelo Grupo 07 no Projeto Interdisciplinar do 6º semestre
+de Desenvolvimento de Software Multiplataforma (DSM 2026/2).
 
-**Alunos:** Thiago Cunha, Paulo Ricardo, Vinícius de Araújo e Patrícia Nogueira
+**Integrantes:** Thiago Cunha, Paulo Ricardo, Vinícius de Araújo e Patrícia
+Nogueira
 
-**Instituição:** Fatec Franca — "Dr. Thomaz Novelino" (Centro Paula Souza)
+**Instituição:** Fatec Franca — “Dr. Thomaz Novelino” (Centro Paula Souza)
 
----
+## 1. Objetivo do produto
 
-## Visão do produto
+O Café PI cruza condições climáticas e dados de produtividade para apoiar a
+interpretação de regiões produtoras de café. A solução possui:
 
-Plataforma multiplataforma (Web e Mobile) de **mineração de dados agrícolas e climáticos do café**. O sistema cruza dados meteorológicos com registros de produtividade para gerar inteligência de negócios aos produtores rurais — via dashboard web e, futuramente, app mobile em campo.
+- API REST NestJS para autenticação, regiões, clima, safra e clusters;
+- dashboard Web Next.js integrado à API;
+- aplicativo Mobile Expo com login, regiões e detalhes de clima/safra;
+- PostgreSQL gerenciado por Prisma;
+- pipeline analítico em Python para tratamento, coleta e clusterização;
+- documentação intermediária da Sprint 2 com as evidências que ainda precisam
+  ser anexadas ao relatório.
 
-Documentação completa da Sprint 1: [documentacao-sprint1.md](./docs/documentacao-sprint1.md)
+O rendimento obtido da CONAB é uma referência agregada por UF. Não deve ser
+interpretado como medição individual de uma propriedade.
 
----
+## 2. Critérios de entrega da Sprint 2
 
-## Stack
+| Critério | Situação atual | Evidência obrigatória |
+| --- | --- | --- |
+| Back-end com CRUD básico | Implementado localmente | Print do Swagger, requisições CRUD e trecho de controller/service |
+| Front-end integrado | Web e Mobile integrados para consulta | Print do dashboard e da tela Mobile; trecho do cliente HTTP |
+| Banco populado com testes | Implementado localmente pelo seed | Print das tabelas ou Prisma Studio e saída do seed |
+| Commits ativos da equipe | Deve ser conferido no GitHub | Print do histórico filtrado por autor |
+| Ambiente em nuvem | Pendente de configuração final | Print do provedor, banco, API publicada e configuração inicial |
+| Coleta e tratamento | Scripts NASA POWER e CONAB/agrobr criados | Print da execução, CSV tratado, contagens e validações |
+| Técnica inicial de mineração | Cluster climático preliminar implementado | Print do resultado, variáveis, `k=2` e métrica do pipeline |
+| Documentação intermediária | Mantida em atualização | Prints, links e trechos inseridos em `docs/documentacao-sprint2.md` |
+
+O checklist detalhado e o registro oficial de pendências estão em
+[docs/documentacao-sprint2.md](./docs/documentacao-sprint2.md).
+
+## 3. Stack
 
 | Camada | Tecnologia |
 | --- | --- |
-| API | NestJS (Node.js) |
-| ORM / DB | Prisma + PostgreSQL |
-| Web | Next.js (React) |
-| Mobile (planejado) | React Native / Expo |
-| Analítico (planejado) | Python (clustering / regressão) |
-| Infra local | Docker Compose |
-| Nuvem (planejado) | Azure VMs + GitHub Actions |
+| API | NestJS 11, Node.js 20+ |
+| ORM e banco | Prisma 6 + PostgreSQL 16 |
+| Web | Next.js 15, React 19, Tailwind CSS 4 |
+| Mobile | React Native, Expo e `expo-secure-store` |
+| Analytics | Python, pandas, scikit-learn e Jupyter |
+| Infraestrutura local | Docker Compose |
+| Fontes externas | NASA POWER e CONAB via pacote `agrobr` |
 
----
+## 4. Estrutura do repositório
 
-## Estrutura do repositório
-
-```
+```text
 /
-├── backend/                 # API NestJS + Prisma
-├── web/                     # Protótipo Next.js (telas estáticas)
-├── docker-compose.yml       # PostgreSQL local
-├── docs/                    # Documentação das sprints
-│   └── documentacao-sprint1.md
-└── .cursor/rules/           # Regras de negócio para o agente
+├── backend/
+│   ├── prisma/              # schema, migrations e seed
+│   ├── src/                 # módulos NestJS
+│   ├── scripts/             # importação idempotente de CSVs tratados
+│   └── test/                # testes e2e
+├── web/
+│   └── src/                 # dashboard Next.js e cliente HTTP
+├── mobile/
+│   ├── App.tsx              # login, regiões e detalhes
+│   └── src/                 # API e sessão segura
+├── analytics/
+│   ├── notebooks/            # pipeline de mineração
+│   ├── scripts/              # coleta NASA POWER e CONAB
+│   └── docs/                 # explicações e limitações analíticas
+├── docs/
+│   ├── documentacao-sprint1.md
+│   └── documentacao-sprint2.md
+├── docker-compose.yml
+└── README.md
 ```
 
----
-
-## Arquitetura (resumo)
+## 5. Arquitetura
 
 ```mermaid
 flowchart LR
-    subgraph Clientes
-        WEB[Front-End Web Next.js]
-        MOB[Mobile Expo futuro]
-    end
-
-    subgraph Backend
-        API[API NestJS]
-    end
-
-    DB[(PostgreSQL + Prisma)]
-
-    WEB -->|HTTPS/JSON| API
-    MOB -->|HTTPS/JSON| API
-    API -->|CRUD| DB
+    NASA[NASA POWER] --> PIPE[Pipeline Python]
+    CONAB[CONAB via agrobr] --> PIPE
+    PIPE --> CSV[CSV tratado]
+    CSV --> IMPORT[Importador idempotente]
+    IMPORT --> DB[(PostgreSQL + Prisma)]
+    WEB[Web Next.js] -->|JWT / JSON| API[API NestJS]
+    MOB[Mobile Expo] -->|JWT / JSON| API
+    API --> DB
+    API --> CLUSTER[Cluster climático preliminar]
 ```
 
----
+As regras de negócio ficam no back-end ou no pipeline. Web e Mobile não fazem
+chamadas diretas à NASA POWER ou à CONAB.
 
-## Como subir localmente
+## 6. Configuração local
 
 ### Pré-requisitos
 
-- Node.js 20+
-- Docker Desktop em execução (necessário para o PostgreSQL)
+- Node.js 20 ou superior;
+- Docker Desktop;
+- Python 3.11 ou superior para o módulo analítico;
+- npm.
 
-### 1. Banco de dados
+### PostgreSQL
 
-```bash
+Na raiz do projeto:
+
+```powershell
 docker compose up -d
 ```
 
-Se o comando falhar, abra o **Docker Desktop** e tente de novo.
-### 2. Back-end
+O Compose cria localmente o banco `cafe_pi` na porta `5432`. Os valores
+completos de conexão devem permanecer apenas nos arquivos `.env` locais.
 
-```bash
-cd backend
-cp .env.example .env
+### Back-end
+
+```powershell
+Set-Location backend
+Copy-Item .env.example .env
 npm install
+npx prisma generate
 npx prisma migrate dev
+npm run prisma:seed
 npm run start:dev
 ```
 
-- API: `http://localhost:3001`
-- Swagger: `http://localhost:3001/api`
+API: `http://localhost:3001`
 
-### 3. Front-end (web)
+Swagger: `http://localhost:3001/api`
 
-```bash
-cd web
+Scripts principais:
+
+```powershell
+npm run build
+npm run lint
+npm run test
+npm run test:e2e
+npm run data:import -- clima.csv safra.csv regiao-uf.csv
+```
+
+O comando `data:import` valida regiões e realiza upsert de clima por
+`regiaoId + data` e de safra por `regiaoId + anoColheita`.
+
+### Web
+
+```powershell
+Set-Location web
+Copy-Item .env.example .env
 npm install
 npm run dev
 ```
 
-- App: `http://localhost:3000`
+Web: `http://localhost:3000`
 
----
+Variável necessária:
 
-## Sprint 1 vs. próximas sprints
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
 
-| Escopo | Sprint |
-| --- | --- |
-| Escopo, modelagem, repo, NestJS + Prisma, Next.js estático, planejamento nuvem/mineração | **1** (atual) |
-| K-Means / clusters | 2 |
-| Regressão / predições de produtividade | 3 |
-| App mobile Expo | planejado (Seção 7 da doc) |
+Validação:
 
----
+```powershell
+npm run lint
+npm run build
+```
 
-## Entrega
+### Mobile
 
-**Data da 1ª Sprint:** 04/09/2026
+```powershell
+Set-Location mobile
+Copy-Item .env.example .env
+npm install
+npx tsc --noEmit
+npm run start
+```
+
+Para um dispositivo físico, `EXPO_PUBLIC_API_URL` deve apontar para o IP da
+máquina na rede local, e não para `localhost`.
+
+## 7. API e autenticação
+
+Todas as rotas abaixo exigem JWT, exceto login e cadastro.
+
+| Método | Endpoint | Acesso | Finalidade |
+| --- | --- | --- | --- |
+| `POST` | `/auth/login` | Público | Emite JWT |
+| `POST` | `/auth/register` | Público | Cadastra produtor |
+| `GET` | `/regioes` | Autenticado | Lista regiões |
+| `POST` | `/regioes` | `ADMIN`, `TECNICO` | Cria região |
+| `PATCH` | `/regioes/:id` | `ADMIN`, `TECNICO` | Atualiza região |
+| `DELETE` | `/regioes/:id` | `ADMIN` | Remove região |
+| `GET` | `/clima/:regiaoId?de=&ate=` | Autenticado | Consulta clima por período |
+| `POST` | `/clima` | `ADMIN`, `TECNICO` | Cria observação climática |
+| `PATCH` | `/clima/:id` | `ADMIN`, `TECNICO` | Atualiza observação |
+| `DELETE` | `/clima/:id` | `ADMIN` | Remove observação |
+| `GET` | `/safra/:regiaoId?ano=` | Autenticado | Consulta safra por ano |
+| `POST` | `/safra` | `ADMIN`, `TECNICO` | Cria rendimento |
+| `PATCH` | `/safra/:id` | `ADMIN`, `TECNICO` | Atualiza rendimento |
+| `DELETE` | `/safra/:id` | `ADMIN` | Remove rendimento |
+| `GET` | `/clusters` | Autenticado | Consulta agrupamento climático |
+
+Exemplo de login:
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "usuario@exemplo.com",
+  "senha": "senha-local"
+}
+```
+
+Exemplo de criação de clima:
+
+```http
+POST /clima
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{
+  "regiaoId": "<id-da-regiao>",
+  "data": "2024-01-15",
+  "temperaturaMedia": 23.5,
+  "precipitacao": 120.4,
+  "umidade": 68.2,
+  "radiacaoSolar": 5.7
+}
+```
+
+O token acima é apenas um marcador de documentação. Não registrar tokens,
+senhas ou chaves reais no repositório.
+
+## 8. Front-end integrado
+
+### Web
+
+O dashboard em
+[web/src/app/dashboard/page.tsx](./web/src/app/dashboard/page.tsx) oferece:
+
+- seleção de região;
+- filtro de clima por período;
+- filtro de safra por ano;
+- indicadores de temperatura, chuva e rendimento;
+- série visual de temperatura;
+- histórico de safras;
+- clusters climáticos e explicação da métrica;
+- estados de carregamento, erro e ausência de dados.
+
+O contrato tipado está em
+[web/src/lib/api.ts](./web/src/lib/api.ts).
+
+### Mobile
+
+O aplicativo em [mobile/App.tsx](./mobile/App.tsx) oferece:
+
+- login com armazenamento seguro;
+- lista de regiões;
+- seleção de região;
+- detalhes de clima e safra;
+- indicadores recentes;
+- estados de carregamento, erro e vazio.
+
+CRUD administrativo no Mobile permanece fora do escopo da integração inicial.
+
+## 9. Dados e mineração
+
+### Coleta climática
+
+O script
+[coletar_nasa_power.py](./analytics/scripts/coletar_nasa_power.py) consulta
+temperatura, precipitação, umidade e radiação solar por latitude e longitude.
+
+```powershell
+Set-Location analytics
+python scripts\coletar_nasa_power.py `
+  --regions data\regions.csv `
+  --output data\processed\clima_nasa.csv `
+  --start 20240101 `
+  --end 20241231
+```
+
+### Coleta de safra
+
+O script [coletar_conab.py](./analytics/scripts/coletar_conab.py) usa
+`agrobr.sync.conab.safras`, consulta café por safra e UF e converte
+produtividade de kg/ha para toneladas/ha.
+
+```powershell
+Set-Location analytics
+python scripts\coletar_conab.py `
+  --output data\processed\safra_conab.csv `
+  --safra 2024/25 `
+  --uf MG
+```
+
+### Tratamento e cluster
+
+O pipeline analítico segue a ordem:
+
+```text
+00_preprocessamento → 01_ingestao → 02_correlacao → 03_kmeans → 04_regressao
+```
+
+O endpoint `/clusters` aplica o agrupamento preliminar sobre:
+
+- temperatura média;
+- precipitação média;
+- umidade média;
+- radiação solar média.
+
+O resultado atual é exploratório. A previsão de produtividade permanece
+reservada para a Sprint 3, pois as bases atuais não formam uma série observada
+de café por região e ano suficiente para uma previsão confiável.
+
+## 10. Critérios para prints e trechos de código
+
+Os prints devem mostrar contexto suficiente para identificar o projeto, a rota,
+o resultado e a data da evidência. Ocultar tokens, senhas, URLs privadas,
+chaves e dados pessoais.
+
+### Prints obrigatórios
+
+1. **Back-end/Swagger**
+   - Swagger em `/api`;
+   - endpoint aberto com método, rota e payload;
+   - resposta HTTP de sucesso;
+   - pelo menos um erro de validação ou recurso inexistente.
+2. **Front-end Web**
+   - login;
+   - dashboard com região selecionada;
+   - filtro de período/ano;
+   - série climática, safra e cluster;
+   - aba Network mostrando a chamada para a API sem expor o JWT.
+3. **Mobile**
+   - login;
+   - lista de regiões;
+   - detalhe de clima e safra;
+   - estado de erro ou ausência de dados, quando aplicável.
+4. **Banco**
+   - PostgreSQL/Prisma Studio com `Regiao_Produtora`,
+     `Condicao_Climatica` e `Safra_Rendimento`;
+   - saída do `prisma:seed`;
+   - evidência de reexecução sem duplicidade.
+5. **Analytics**
+   - execução dos scripts de coleta;
+   - CSV tratado;
+   - notebook com tratamento;
+   - gráfico ou saída do K-Means;
+   - variáveis, `k=2`, quantidade de regiões e silhouette quando disponível.
+6. **Nuvem**
+   - provedor e recurso criado;
+   - banco e API disponíveis;
+   - configuração inicial sem mostrar credenciais;
+   - teste da API publicada.
+7. **GitHub**
+   - histórico de commits;
+   - autores identificáveis;
+   - branch ou pull request correspondente.
+
+### Trechos de código recomendados
+
+Cada trecho deve conter caminho do arquivo e contexto suficiente para
+identificar a implementação. Recomenda-se anexar:
+
+- controller e DTO do CRUD;
+- `web/src/lib/api.ts` com o cliente tipado;
+- trecho do dashboard que chama clima, safra e clusters;
+- `mobile/src/api.ts` e armazenamento da sessão;
+- `analytics/scripts/coletar_nasa_power.py`;
+- `analytics/scripts/coletar_conab.py`;
+- `backend/scripts/import-tratados.ts`;
+- `backend/prisma/schema.prisma`;
+- teste e2e de autenticação ou CRUD.
+
+Modelo para registrar cada evidência:
+
+```text
+EVIDÊNCIA E-01 — Dashboard Web
+Arquivo/rota: web/src/app/dashboard/page.tsx
+Objetivo: demonstrar filtro de período e consumo da API
+Print: docs/evidencias/sprint2-dashboard.png
+Comando/teste: cd web; npm run build
+Resultado: aprovado
+```
+
+## 11. Validação antes da entrega
+
+Executar:
+
+```powershell
+Set-Location backend
+npm run build
+npm run lint
+npm run test:e2e
+
+Set-Location ..\web
+npm run lint
+npm run build
+
+Set-Location ..\mobile
+npx tsc --noEmit
+
+Set-Location ..\analytics
+python -m py_compile scripts\coletar_nasa_power.py scripts\coletar_conab.py
+```
+
+Também executar `git diff --check` antes do commit.
+
+## 12. Documentação complementar
+
+- [Documentação da Sprint 1](./docs/documentacao-sprint1.md)
+- [Documentação geral da Sprint 2](./docs/documentacao-sprint2.md)
+- [README do back-end](./backend/README.md)
+- [README do Web](./web/README.md)
+- [README do Mobile](./mobile/README.md)
+- [README de analytics](./analytics/README.md)
+- [Explicação do pré-processamento](./analytics/docs/explicacao-preprocessamento.md)
+- [Regras do Copilot](./.github/copilot-instructions.md)
+
+## 13. Política de segurança e Git
+
+- Não versionar `.env`, senhas, tokens, chaves privadas ou arquivos sensíveis.
+- Commits e pushes somente mediante solicitação explícita.
+- Revisar os arquivos staged antes do commit.
+- Manter a documentação da Sprint 2 atualizada em toda alteração do projeto.

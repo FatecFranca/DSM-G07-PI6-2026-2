@@ -1,14 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateSafraDto, UpdateSafraDto } from './dto/safra.dto';
+import {
+  CreateSafraDto,
+  SafraQueryDto,
+  UpdateSafraDto,
+} from './dto/safra.dto';
 
 @Injectable()
 export class SafraService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByRegiao(regiaoId: string) {
+  findByRegiao(regiaoId: string, query: SafraQueryDto = {}) {
     return this.prisma.safraRendimento.findMany({
-      where: { regiaoId },
+      where: { regiaoId, ...(query.ano ? { anoColheita: query.ano } : {}) },
       orderBy: { anoColheita: 'asc' },
     });
   }
