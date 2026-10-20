@@ -1,0 +1,19 @@
+E-01 / E-04 — Validação do backend
+Data: 2026-10-20
+
+Comandos:
+  cd backend
+  npm run build
+  npm run test:e2e
+
+Resultado:
+  nest build: aprovado
+  Test Suites: 1 passed, 1 total
+  Tests: 4 passed, 4 total
+
+Infraestrutura local:
+  container cafe-pi-postgres: Up
+  porta: 5432
+
+Prints ainda necessários:
+  Swagger, CRUD executado, erro de validação e tabelas do banco.
