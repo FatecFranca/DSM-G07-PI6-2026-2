@@ -73,9 +73,9 @@ rotas abaixo, exceto login e cadastro, exigem `Authorization: Bearer <token>`.
 precipitação, umidade e radiação solar. O endpoint de predições permanece
 reservado para a Sprint 3.
 
-Os dados de clima planejados são coletados pela NASA POWER. Os dados de safra
-serão coletados da CONAB pelo pacote de terceiros `agrobr`, convertendo
-produtividade de kg/ha para toneladas/ha. O rendimento da CONAB é agregado por
+Os dados de clima são coletados pela NASA POWER. Os dados de safra vêm da série
+histórica oficial de café da CONAB, convertendo produtividade de sacas/ha para
+toneladas/ha (1 saca = 60 kg). O rendimento da CONAB é agregado por
 UF e deve ser apresentado como referência regional, não como medição individual.
 
 ## Scripts

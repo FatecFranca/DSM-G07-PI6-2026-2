@@ -34,8 +34,8 @@ interpretado como medição individual de uma propriedade.
 | Banco populado com testes | Implementado localmente pelo seed | Print das tabelas ou Prisma Studio e saída do seed |
 | Commits ativos da equipe | Deve ser conferido no GitHub | Print do histórico filtrado por autor |
 | Ambiente em nuvem | Pendente de configuração final | Print do provedor, banco, API publicada e configuração inicial |
-| Coleta e tratamento | Scripts NASA POWER e CONAB/agrobr criados | Print da execução, CSV tratado, contagens e validações |
-| Técnica inicial de mineração | Cluster climático preliminar implementado | Print do resultado, variáveis, `k=2` e métrica do pipeline |
+| Coleta e tratamento | Coleta NASA POWER e IBGE (PAM) executada; notebook de pré-processamento executado | Print da execução, CSV tratado, contagens e validações |
+| Técnica inicial de mineração | K-Means e classificação de aptidão por cultura (notebooks 03 e 04) | Print do resultado, variáveis, `k=2` e métrica do pipeline |
 | Documentação intermediária | Mantida em atualização | Prints, links e trechos inseridos em `docs/documentacao-sprint2.md` |
 
 O checklist detalhado e o registro oficial de pendências estão em
@@ -51,7 +51,7 @@ O checklist detalhado e o registro oficial de pendências estão em
 | Mobile | React Native, Expo e `expo-secure-store` |
 | Analytics | Python, pandas, scikit-learn e Jupyter |
 | Infraestrutura local | Docker Compose |
-| Fontes externas | NASA POWER e CONAB via pacote `agrobr` |
+| Fontes externas | NASA POWER (clima) e IBGE/PAM (produção por município e cultura) |
 
 ## 4. Estrutura do repositório
 
@@ -83,7 +83,7 @@ O checklist detalhado e o registro oficial de pendências estão em
 ```mermaid
 flowchart LR
     NASA[NASA POWER] --> PIPE[Pipeline Python]
-    CONAB[CONAB via agrobr] --> PIPE
+    IBGE[IBGE PAM] --> PIPE
     PIPE --> CSV[CSV tratado]
     CSV --> IMPORT[Importador idempotente]
     IMPORT --> DB[(PostgreSQL + Prisma)]
@@ -280,23 +280,22 @@ temperatura, precipitação, umidade e radiação solar por latitude e longitude
 Set-Location analytics
 python scripts\coletar_nasa_power.py `
   --regions data\regions.csv `
-  --output data\processed\clima_nasa.csv `
-  --start 20240101 `
-  --end 20241231
+  --output data\raw\clima_nasa.csv `
+  --start 20010101 `
+  --end 20251231
 ```
 
 ### Coleta de safra
 
-O script [coletar_conab.py](./analytics/scripts/coletar_conab.py) usa
-`agrobr.sync.conab.safras`, consulta café por safra e UF e converte
-produtividade de kg/ha para toneladas/ha.
+O script [coletar_conab.py](./analytics/scripts/coletar_conab.py) baixa a série
+histórica oficial de café da CONAB (arábica e conilon, por UF), lê a aba
+"Produtividade" e converte sacas por hectare para toneladas por hectare
+(1 saca = 60 kg). O pacote `agrobr` não oferece café em `conab.safras`.
 
 ```powershell
 Set-Location analytics
-python scripts\coletar_conab.py `
-  --output data\processed\safra_conab.csv `
-  --safra 2024/25 `
-  --uf MG
+python scripts\coletar_conab.py --baixar `
+  --output data\raw\safra_conab.csv
 ```
 
 ### Tratamento e cluster

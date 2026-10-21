@@ -10,9 +10,10 @@ Resultado:
 
 Fontes:
   clima: NASA POWER;
-  safra: CONAB via agrobr;
-  conversão: kg/ha para t/ha dividindo por 1000.
+  safra: CONAB, série histórica oficial de café por UF;
+  conversão: sacas/ha para t/ha (1 saca = 60 kg).
 
 Limitação:
-  A coleta real e os CSVs tratados ainda precisam ser executados e anexados.
+  A coleta real foi executada (clima 2001-2025 de 8 regiões e safra por UF);
+  os prints da execução ainda precisam ser anexados.
   O cluster atual é preliminar e usa quatro variáveis climáticas.

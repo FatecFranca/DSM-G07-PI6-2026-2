@@ -1,59 +1,64 @@
-"""Normaliza dados de café da CONAB obtidos pelo pacote agrobr.
+"""Converte a série histórica oficial de café da CONAB em CSV por UF e ano.
 
-O pacote é opcional e de terceiros. Este script falha explicitamente quando
-não está instalado para evitar uma carga com dados incompletos ou inventados.
+Fonte: CONAB, "Café total (arábica e conilon) - série histórica".
+O pacote agrobr não oferece café em `conab.safras`, por isso o arquivo oficial
+da CONAB é baixado e a aba "Produtividade" (sacas beneficiadas por hectare) é
+convertida para toneladas por hectare (1 saca = 60 kg).
+
+Saída: CSV com uf, anoColheita, produtividadeSacasHectare,
+rendimentoToneladasHectare e fonte.
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
+import urllib.request
 from pathlib import Path
+
+import pandas as pd
+
+URL = (
+    "https://www.gov.br/conab/pt-br/atuacao/informacoes-agropecuarias/safras/"
+    "series-historicas/cafe/total-arabica-e-conilon/cafetotalseriehist.xls"
+)
+KG_POR_SACA = 60
+
+
+def baixar(destino: Path) -> None:
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(URL, headers={"User-Agent": "cafe-pi-analytics/1.0"})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        destino.write_bytes(response.read())
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--safra", required=True)
-    parser.add_argument("--uf", required=True, help="UF da região, por exemplo MG")
+    parser.add_argument("--xls", type=Path, default=Path("data/raw/conab_cafe_total.xls"))
+    parser.add_argument("--output", type=Path, default=Path("data/raw/safra_conab.csv"))
+    parser.add_argument("--baixar", action="store_true", help="Baixa o XLS da CONAB antes de converter")
     args = parser.parse_args()
 
-    try:
-        from agrobr.sync import conab  # type: ignore
-    except ImportError as error:
-        raise RuntimeError(
-            "Instale a dependência agrobr antes da coleta: pip install agrobr"
-        ) from error
+    if args.baixar or not args.xls.exists():
+        baixar(args.xls)
 
-    result = conab.safras(
-        produto="cafe",
-        safra=args.safra,
-        uf=args.uf,
-    )
-    if result is None or result.empty:
-        raise RuntimeError("A CONAB não retornou dados para a safra e UF informadas")
+    tabela = pd.read_excel(args.xls, sheet_name="Produtividade", header=None)
+    cabecalho = tabela.index[tabela[0].astype(str).str.startswith("UNIDADE DA FEDERA")][0]
+    anos = tabela.iloc[cabecalho, 1:]
+    dados = tabela.iloc[cabecalho + 1:].copy()
+    dados.columns = ["uf"] + list(anos)
+    dados = dados[dados["uf"].astype(str).str.fullmatch(r"[A-Z]{2}")]
 
-    rows = []
-    for _, item in result.iterrows():
-        produtividade = item.get("produtividade")
-        if produtividade is None:
-            continue
-        rows.append(
-            {
-                "uf": str(item.get("uf", args.uf)).upper(),
-                "anoColheita": int(str(item.get("safra", args.safra))[:4]),
-                "rendimentoToneladasHectare": float(produtividade) / 1000,
-                "fonte": "CONAB/agrobr",
-            }
-        )
-    if not rows:
-        raise RuntimeError("A resposta não contém produtividade em sacas por hectare")
+    longo = dados.melt(id_vars="uf", var_name="anoColheita", value_name="produtividadeSacasHectare")
+    longo["anoColheita"] = pd.to_numeric(longo["anoColheita"], errors="coerce")
+    longo["produtividadeSacasHectare"] = pd.to_numeric(longo["produtividadeSacasHectare"], errors="coerce")
+    longo = longo.dropna()
+    longo["anoColheita"] = longo["anoColheita"].astype(int)
+    longo["rendimentoToneladasHectare"] = longo["produtividadeSacasHectare"] * KG_POR_SACA / 1000
+    longo["fonte"] = "CONAB"
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=rows[0])
-        writer.writeheader()
-        writer.writerows(rows)
+    longo.sort_values(["uf", "anoColheita"]).to_csv(args.output, index=False)
+    print(f"{len(longo)} linhas salvas em {args.output}")
 
 
 if __name__ == "__main__":

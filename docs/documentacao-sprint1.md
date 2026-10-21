@@ -37,7 +37,7 @@ O presente projeto consiste no desenvolvimento de uma solução de software **mu
 
 - **RF01.1:** O sistema deve importar os arquivos CSV das bases "Coffee Data Set" e "Agriculture Crop Yield" (Kaggle) por meio de um script de ingestão em Python.
 - **RF01.2:** O sistema deve identificar e tratar dados ausentes (*missing values*) nas colunas de temperatura, precipitação, umidade, radiação solar e rendimento antes da persistência.
-- **RF01.3:** O sistema deve relacionar as duas bases. Como o "Agriculture Crop Yield" não possui região nem ano, a relação é feita por um modelo de regressão treinado nessa base e aplicado ao clima das regiões do "Coffee Data Set" (ver `documentacao-preprocessamento.md`). Caso uma base com produção de café por região e ano seja adicionada, o relacionamento passa a ser por *join* nessas chaves.
+- **RF01.3:** O sistema deve relacionar as bases pelo município: o clima da NASA POWER de cada município é unido, pelo código do IBGE, à área colhida das culturas da PAM do IBGE, de onde saem os rótulos de aptidão usados na classificação. Na Sprint 1 a relação havia sido planejada por regressão entre o "Coffee Data Set" e o "Agriculture Crop Yield", que não possui região nem ano (ver `documentacao-preprocessamento.md`).
 - **RF01.4:** O sistema deve persistir os dados consolidados nas tabelas `Regiao_Produtora`, `Condicao_Climatica` e `Safra_Rendimento` do banco de dados relacional.
 
 #### RF02 — Mineração de Dados (Módulo Analítico em Python)

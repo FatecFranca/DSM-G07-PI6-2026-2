@@ -415,11 +415,11 @@ tratado na próxima entrega.
 - Extrair os contratos HTTP para um módulo compartilhado entre Web e Mobile.
 - Consolidar os endpoints CRUD que ainda estiverem pendentes.
 - Automatizar ou revisar a carga dos dados de teste.
-- Executar e validar a coleta de clima em
-  `analytics/scripts/coletar_nasa_power.py`.
-- Executar e validar a coleta de safra em
-  `analytics/scripts/coletar_conab.py`, incluindo a correspondência entre UF e
-  região produtora.
+- Coleta de clima (`analytics/scripts/coletar_nasa_power.py`) e de safra
+  (`analytics/scripts/coletar_conab.py`) executadas; anexar os prints da
+  execução.
+- Carregar no banco os dados tratados (`01_ingestao.ipynb` ou
+  `npm run data:import`), com a correspondência UF e região produtora.
 - Registrar proveniência, período e unidades persistidas nos arquivos tratados;
   o importador idempotente já está disponível em `backend/scripts/`.
 - Adicionar gráficos e filtros de período/ano no dashboard após a carga validada.

@@ -151,18 +151,16 @@ Esta evidência não pode ser inventada localmente. Ainda é necessário:
 Set-Location analytics
 python scripts\coletar_nasa_power.py `
   --regions data\regions.csv `
-  --output data\processed\clima_nasa.csv `
-  --start 20240101 `
-  --end 20241231
+  --output data\raw\clima_nasa.csv `
+  --start 20010101 `
+  --end 20251231
 ```
 
 ### Coleta CONAB
 
 ```powershell
-python scripts\coletar_conab.py `
-  --output data\processed\safra_conab.csv `
-  --safra 2024/25 `
-  --uf MG
+python scripts\coletar_conab.py --baixar `
+  --output data\raw\safra_conab.csv
 ```
 
 ### Trechos de código
@@ -172,8 +170,9 @@ python scripts\coletar_conab.py `
 - [clusters.service.ts](../../backend/src/clusters/clusters.service.ts)
 - [Notebook K-Means](../../analytics/notebooks/03_kmeans.ipynb)
 
-Os scripts foram compilados com `py_compile`. A coleta real depende de
-executar os serviços externos e validar o arquivo de regiões/UF.
+Os scripts foram compilados com `py_compile` e executados: o clima da NASA
+POWER (2001-2025) foi coletado para as 8 regiões brasileiras de `data/regions.csv`
+e a série histórica da CONAB foi convertida para t/ha por UF e ano.
 
 ## E-09 — Validação
 

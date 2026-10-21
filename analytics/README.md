@@ -1,95 +1,96 @@
 # `analytics/` — Módulo Analítico (ML) do Café PI
 
-Notebooks da parte de mineração de dados do projeto (RF01/RF02 de
-`docs/documentacao-sprint1.md`): ingestão de clima, correlação, K-Means e a
-ponte de regressão clima→rendimento.
+Mineração de dados do projeto (RF01/RF02 de `docs/documentacao-sprint1.md`):
+coleta e tratamento, K-Means e classificação supervisionada que indica **quais
+culturas combinam com o clima de cada município**.
 
-## Datasets usados
+## Fontes de dados
 
-- **Coffee Data Set** — <https://www.kaggle.com/datasets/escstockholm/coffee-data-set>
-  → salvar como `data/raw/Coffee_Data_Set.csv`
-- **Agriculture Crop Yield** — <https://www.kaggle.com/datasets/samuelotiattakorah/agriculture-crop-yield>
-  → salvar como `data/raw/crop_yield.csv`
+| Base | Fonte | Script | Saída bruta |
+| --- | --- | --- | --- |
+| Clima (climatologia) de 1.576 municípios de ES, MG e SP | NASA POWER | `scripts/coletar_clima_municipios.py` | `data/raw/clima_municipios.csv` |
+| Área, produção e rendimento por município, cultura e ano (2001–2024) | IBGE / PAM | `scripts/coletar_ibge_pam.py` | `data/raw/pam_culturas_municipios.csv` |
+| Latitude e longitude dos municípios | `kelvins/municipios-brasileiros` | (baixado pelo script de clima) | `data/raw/municipios_coord.csv` |
 
-Os CSVs brutos não são versionados — cada integrante baixa os seus.
+Culturas: café, cana-de-açúcar, soja, milho, laranja e feijão. As bases se ligam pelo
+código do município (IBGE).
 
-## Decisões de dados
+Os arquivos de `data/raw/` e `data/processed/` não são versionados: cada pessoa roda
+a coleta e os notebooks.
 
-`Coffee_Data_Set.csv` é um painel diário de clima (2000–2025) para 25
-localidades reais de café em 8 países. Não tem rendimento em
-toneladas/hectare, só o preço do café (`Close_USD_60kg`, igual pra todas as
-regiões numa mesma data — por isso não é usado como proxy de produtividade).
+## Execução
 
-`crop_yield.csv` tem rendimento real (`Yield_tons_per_hectare`), mas de
-culturas genéricas (não café), sem ano e sem região geográfica real — não dá
-pra unir os dois por região+ano.
-
-A ligação entre os dois datasets é feita pelo modelo, não por um join:
-`crop_yield.csv` ensina a relação clima→rendimento (`04_regressao.ipynb`),
-que depois é aplicada ao clima real das 25 regiões de café. O resultado é
-uma estimativa por transferência, não um rendimento observado.
-
-## Notebooks
-
-Ordem de execução: 00 → 01 → 02 → 03 → 04. Do 01 ao 04, tudo lê de
-`data/processed/` (saída do 00), nunca do CSV bruto.
-
-| Notebook | RF | Depende do Postgres? |
-| --- | --- | --- |
-| `00_preprocessamento.ipynb` | RF01 | Não |
-| `01_ingestao.ipynb` | RF01 | Sim |
-| `02_correlacao.ipynb` | RF02.1 | Não |
-| `03_kmeans.ipynb` | RF02.2 | Não |
-| `04_regressao.ipynb` | RF02.3 | Não |
-
-## Setup
-
-```bash
+```powershell
 cd analytics
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env
+
+# 1) coleta (precisa de internet; a do clima leva alguns minutos e retoma de onde parou)
+python scripts\coletar_clima_municipios.py
+python scripts\coletar_ibge_pam.py
+
+# 2) notebooks, na ordem
 jupyter notebook
 ```
 
-Baixe os dois CSVs e salve em `data/raw/` com os nomes acima antes de rodar.
+| Notebook | Conteúdo | Depende do Postgres? |
+| --- | --- | --- |
+| `00_preprocessamento.ipynb` | Tratamento, novas variáveis e rótulos de aptidão | Não |
+| `01_ingestao.ipynb` | Grava municípios com café e histórico de café no banco | Sim |
+| `02_correlacao.ipynb` | Correlação de Spearman: clima x área de cada cultura | Não |
+| `03_kmeans.ipynb` | Agrupamento (não supervisionado) e cruzamento com as culturas | Não |
+| `04_classificacao.ipynb` | Classificação supervisionada, matrizes de confusão e recomendação | Não |
 
-## Fontes planejadas de produção
+Os notebooks 02 a 04 leem só de `data/processed/` (saída do 00).
 
-Os scripts em `scripts/` separam a coleta externa do pipeline de notebooks:
+## Dois algoritmos, de natureza diferente
 
-```bash
-python scripts/coletar_nasa_power.py --regions data/regions.csv \
-  --output data/processed/clima_nasa.csv --start 20240101 --end 20241231
-python scripts/coletar_conab.py --output data/processed/safra_conab.csv \
-  --safra 2024/25 --uf MG
-```
+| Algoritmo | Tipo | Pergunta |
+| --- | --- | --- |
+| **K-Means** | Não supervisionado | Quais municípios têm clima parecido? |
+| **Classificação** (regressão logística, Random Forest e Gradient Boosting, comparados) | Supervisionado | O município é apto para a cultura X? |
 
-`coletar_nasa_power.py` usa latitude/longitude e descarta respostas com
-sentinelas de ausência. `coletar_conab.py` usa `agrobr.sync.conab.safras` e
-converte a produtividade publicada em kg/ha para t/ha dividindo por 1000.
-Os arquivos processados não devem ser versionados sem revisão.
+A validação da classificação é **espacial**: municípios em células de 1° não ficam
+em treino e teste ao mesmo tempo.
 
 ## Resultados de referência
 
-- Pré-processamento: 28 nulos em `Solar_Radiation` (interpolados), 231
-  rendimentos negativos removidos, 0 duplicados. Detalhes em
-  `docs/explicacao-preprocessamento.md`.
-- K-Means: melhor `k=2` (silhouette 0.346), separa principalmente por
-  temperatura média.
-- Regressão (holdout 20%): MAE≈0.88, RMSE≈1.08, R²≈0.59. Linear (0.593) >
-  CART (0.583) > KNN (0.566) na validação cruzada.
-- Limitação: 23 das 25 regiões têm chuva anual acima de 1000 mm, fora da
-  faixa do treino (100–1000 mm). A estimativa por transferência fica
-  saturada (~6.7–6.9 t/ha) e não discrimina regiões; use só como exploratória.
+- **Pré-processamento:** 5.571 → 1.576 municípios (ES, MG e SP); PAM com 152.797
+  linhas; sem nulos no clima, sem duplicados e sem violações de regra.
+- **K-Means:** melhor k = 7, silhouette 0,334 (separação moderada).
+- **Classificação (melhor modelo por cultura):**
 
-## Próximos passos
+| Cultura | Acurácia | Baseline | Acurácia balanceada | AUC |
+| --- | --- | --- | --- | --- |
+| Café | 87,9% | 76,6% | 81,1% | 0,903 |
+| Cana-de-açúcar | 91,8% | 64,7% | 90,6% | 0,948 |
+| Soja | 80,3% | 71,3% | 79,2% | 0,896 |
+| Milho | 73,4% | 64,6% | 69,9% | 0,776 |
+| Laranja | 73,6% | 89,8% | 80,1% | 0,816 |
+| Feijão | 67,8% | 89,2% | 66,5% | 0,680 |
 
-- `Cluster_Climatico`, `Regiao_Cluster` e `Predicao_Produtividade` (modelo
-  conceitual em `docs/documentacao-sprint1.md`) ainda não existem no
-  `backend/prisma/schema.prisma` — combinar migration com o backend.
-- `Regiao_Produtora` não tem `@@unique([nomeRegiao, pais])` — o
-  `01_ingestao.ipynb` já contorna isso com find-or-create.
-- Avaliar um terceiro dataset com produção real de café por país/ano para
-  popular `Safra_Rendimento`.
+  Laranja e feijão são raros, e os modelos foram balanceados para achá-los (recall
+  alto, precisão baixa), então a acurácia fica abaixo do baseline.
+- **Cultura dominante (multiclasse):** acurácia 72%, balanceada 51%.
+- **Recomendação:** `data/processed/compatibilidade_culturas.csv` (probabilidade de
+  "apto" por município e cultura, calculada fora da amostra, com ranking).
+
+## Saídas principais (`data/processed/`)
+
+`dataset_municipios.csv`, `clusters_municipios.csv`, `kmeans_grupo_x_cultura.csv`,
+`classificacao_melhores.csv`, `classificacao_todos_modelos.csv`,
+`matrizes_confusao.png/.csv`, `matriz_confusao_multiclasse.png/.csv`,
+`classificacao_sensibilidade_limite.csv`, `classificacao_importancia_variaveis.csv`
+e `compatibilidade_culturas.csv`.
+
+## Limitações
+
+- "Apto" é medido pela área colhida que já existe (média 2015–2024 ≥ 500 ha), e isso
+  depende também de mercado e tradição.
+- O clima da NASA tem cerca de 50 km de resolução e não enxerga altitude, solo ou relevo.
+- Só ES, MG e SP. Laranja e feijão têm poucos exemplos positivos.
+- A previsão de produtividade (t/ha) foi testada com dados da CONAB (por estado) e do
+  IBGE (por município) e foi fraca (R² próximo de zero em anos futuros). Por isso o
+  foco é a aptidão. Os scripts `coletar_nasa_power.py` e `coletar_conab.py` ficam como
+  histórico desse teste.

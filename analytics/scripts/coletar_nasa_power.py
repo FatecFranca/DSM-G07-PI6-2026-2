@@ -32,7 +32,7 @@ def fetch_region(region: dict[str, str], start: str, end: str) -> list[dict[str,
     )
     url = f"https://power.larc.nasa.gov/api/temporal/daily/point?{query}"
     request = urllib.request.Request(url, headers={"User-Agent": "cafe-pi-analytics/1.0"})
-    with urllib.request.urlopen(request, timeout=30) as response:
+    with urllib.request.urlopen(request, timeout=120) as response:
         payload = json.load(response)
 
     values = payload["properties"]["parameter"]
