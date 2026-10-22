@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   ClimaQueryDto,
@@ -10,7 +10,8 @@ import {
 export class ClimaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findByRegiao(regiaoId: string, query: ClimaQueryDto = {}) {
+  async findByRegiao(regiaoId: string, query: ClimaQueryDto = {}, user?: { id: string; perfil: string }) {
+    if (user) await this.assertRegiaoAccess(regiaoId, user);
     const data = {
       ...(query.de || query.ate
         ? {
@@ -23,6 +24,14 @@ export class ClimaService {
     return this.prisma.condicaoClimatica.findMany({
       where: { regiaoId, ...(Object.keys(data).length > 0 ? { data } : {}) },
       orderBy: { data: 'asc' },
+    });
+  }
+
+  async findClimatologia(regiaoId: string, user: { id: string; perfil: string }) {
+    await this.assertRegiaoAccess(regiaoId, user);
+    return this.prisma.climaRegiao.findFirst({
+      where: { regiaoId },
+      orderBy: { importadoEm: 'desc' },
     });
   }
 
@@ -46,6 +55,14 @@ export class ClimaService {
     await this.ensureExists(id);
     await this.prisma.condicaoClimatica.delete({ where: { id } });
     return { id, deleted: true };
+  }
+
+  private async assertRegiaoAccess(regiaoId: string, user: { id: string; perfil: string }) {
+    const regiao = await this.prisma.regiaoProdutora.findUnique({ where: { id: regiaoId }, select: { id: true, usuarios: { where: { id: user.id }, select: { id: true } } } });
+    if (!regiao) throw new NotFoundException('Município não encontrado');
+    if (user.perfil === 'PRODUTOR' && !regiao.usuarios.length) {
+      throw new ForbiddenException('Município não vinculado ao usuário');
+    }
   }
 
   private async ensureExists(id: string) {

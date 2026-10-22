@@ -14,17 +14,17 @@ export default function Home() {
 
       <main className={styles.heroMain}>
         <p className={styles.eyebrow}>Grupo 07 · DSM · Sprint 1</p>
-        <h1>Clima e produtividade do café, no mesmo lugar.</h1>
+        <h1>Dados climáticos e agrícolas, por município.</h1>
         <p className={styles.lead}>
           Cruzamos dados meteorológicos com rendimento das safras para apoiar
           decisões no campo — no dashboard web e, em breve, no app mobile.
         </p>
         <div className={styles.ctaRow}>
           <Link className={styles.btnPrimary} href="/dashboard">
-            Ver protótipo do dashboard
+            Explorar municípios
           </Link>
           <Link className={styles.btnGhost} href="/login">
-            Login (placeholder)
+            Entrar na plataforma
           </Link>
         </div>
       </main>

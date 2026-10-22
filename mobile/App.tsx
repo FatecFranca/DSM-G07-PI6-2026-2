@@ -15,7 +15,9 @@ import {
   api,
   ApiError,
   AuthResponse,
-  CondicaoClimatica,
+  Climatologia,
+  Compatibilidade,
+  ClusterAssignment,
   Regiao,
   SafraRendimento,
 } from './src/api';
@@ -76,7 +78,7 @@ function LoginScreen({ onLogin }: { onLogin: (session: AuthResponse) => void }) 
       <View style={styles.container}>
         <Text style={styles.eyebrow}>CAFÉ PI</Text>
         <Text style={styles.title}>Inteligência para sua produção</Text>
-        <Text style={styles.subtitle}>Acesse os dados climáticos e de produtividade.</Text>
+        <Text style={styles.subtitle}>Acesse dados de clima, produção e análise por município.</Text>
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
@@ -109,26 +111,39 @@ function HomeScreen({
   onLogout: () => Promise<void>;
 }) {
   const [regioes, setRegioes] = useState<Regiao[]>([]);
+  const [municipioQuery, setMunicipioQuery] = useState('');
+  const [municipioPage, setMunicipioPage] = useState(1);
+  const [municipioPages, setMunicipioPages] = useState(1);
   const [selectedRegiao, setSelectedRegiao] = useState<Regiao | null>(null);
-  const [clima, setClima] = useState<CondicaoClimatica[]>([]);
+  const [clima, setClima] = useState<Climatologia|null>(null);
   const [safras, setSafras] = useState<SafraRendimento[]>([]);
+  const [compatibilidades, setCompatibilidades] = useState<Compatibilidade[]>([]);
+  const [clusters, setClusters] = useState<ClusterAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
     api
-      .regioes(session.accessToken)
-      .then(setRegioes)
-      .catch((reason: unknown) => {
-        setError(reason instanceof ApiError ? reason.message : 'Não foi possível carregar as regiões.');
+      .regioes(session.accessToken, municipioQuery, municipioPage)
+      .then((response) => {
+        if (cancelled) return;
+        setRegioes(response.data);
+        setMunicipioPages(response.totalPages);
+        setSelectedRegiao((current) => current && response.data.some((item) => item.id === current.id) ? current : null);
       })
-      .finally(() => setLoading(false));
-  }, [session.accessToken]);
+      .catch((reason: unknown) => {
+        if (!cancelled) setError(reason instanceof ApiError ? reason.message : 'Não foi possível carregar os municípios.');
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [session.accessToken, municipioQuery, municipioPage]);
 
   useEffect(() => {
     if (!selectedRegiao) {
-      setClima([]);
+      setClima(null);
       setSafras([]);
       return;
     }
@@ -138,11 +153,15 @@ function HomeScreen({
     Promise.all([
       api.clima(selectedRegiao.id, session.accessToken),
       api.safras(selectedRegiao.id, session.accessToken),
+      api.compatibilidades(selectedRegiao.id, session.accessToken),
+      api.clusters(selectedRegiao.id, session.accessToken),
     ])
-      .then(([climaResponse, safrasResponse]) => {
+      .then(([climaResponse, safrasResponse, compatResponse, clusterResponse]) => {
         if (!cancelled) {
           setClima(climaResponse);
           setSafras(safrasResponse);
+          setCompatibilidades(compatResponse);
+          setClusters(clusterResponse);
         }
       })
       .catch((reason: unknown) => {
@@ -162,7 +181,7 @@ function HomeScreen({
     };
   }, [selectedRegiao, session.accessToken]);
 
-  const latestClimate = clima[clima.length - 1];
+  const latestClimate = clima;
   const latestHarvest = safras[safras.length - 1];
 
   return (
@@ -171,16 +190,17 @@ function HomeScreen({
         <View style={styles.header}>
           <View>
             <Text style={styles.eyebrow}>PAINEL {session.perfil}</Text>
-            <Text style={styles.heading}>Regiões produtoras</Text>
+            <Text style={styles.heading}>Municípios vinculados</Text>
           </View>
           <Pressable onPress={onLogout}>
             <Text style={styles.logout}>Sair</Text>
           </Pressable>
         </View>
+        <TextInput placeholder="Buscar município" value={municipioQuery} onChangeText={(value) => { setMunicipioQuery(value); setMunicipioPage(1); }} style={styles.input} />
         {loading && <ActivityIndicator color="#166534" />}
         {error && <Text style={styles.error}>{error}</Text>}
         {!loading && !error && regioes.length === 0 && (
-          <Text style={styles.empty}>Nenhuma região cadastrada.</Text>
+          <Text style={styles.empty}>Nenhum município vinculado a esta conta.</Text>
         )}
         {regioes.map((regiao) => (
           <Pressable
@@ -196,9 +216,10 @@ function HomeScreen({
             <Text style={styles.cardText}>
               {regiao.latitude ?? '—'}, {regiao.longitude ?? '—'}
             </Text>
-            <Text style={styles.cardAction}>Ver clima e safra →</Text>
+            <Text style={styles.cardAction}>Ver clima, produção e compatibilidade →</Text>
           </Pressable>
         ))}
+        {municipioPages > 1 && <View style={styles.dataRow}><Pressable disabled={municipioPage <= 1} onPress={() => setMunicipioPage((page) => page - 1)}><Text style={styles.cardAction}>Anterior</Text></Pressable><Text style={styles.cardText}>{municipioPage} / {municipioPages}</Text><Pressable disabled={municipioPage >= municipioPages} onPress={() => setMunicipioPage((page) => page + 1)}><Text style={styles.cardAction}>Próxima</Text></Pressable></View>}
         {selectedRegiao && (
           <View style={styles.details}>
             <View style={styles.detailsHeader}>
@@ -213,32 +234,37 @@ function HomeScreen({
               <>
                 <View style={styles.metrics}>
                   <Metric label="Temperatura" value={latestClimate?.temperaturaMedia == null ? '—' : `${latestClimate.temperaturaMedia.toFixed(1)} °C`} />
-                  <Metric label="Chuva" value={latestClimate?.precipitacao == null ? '—' : `${latestClimate.precipitacao.toFixed(1)} mm`} />
+                  <Metric label="Chuva" value={latestClimate?.chuvaAnual == null ? '—' : `${latestClimate.chuvaAnual.toFixed(0)} mm/ano`} />
                   <Metric label="Rendimento" value={latestHarvest?.rendimentoToneladasHectare == null ? '—' : `${latestHarvest.rendimentoToneladasHectare.toFixed(2)} t/ha`} />
                 </View>
-                <Text style={styles.sectionTitle}>Últimas observações climáticas</Text>
-                {clima.slice(-5).reverse().map((item) => (
-                  <View key={item.id} style={styles.dataRow}>
-                    <Text style={styles.cardText}>{item.data.slice(0, 10)}</Text>
-                    <Text style={styles.cardText}>
-                      {item.temperaturaMedia == null ? '—' : `${item.temperaturaMedia.toFixed(1)} °C`}
-                      {' · '}
-                      {item.umidade == null ? '—' : `${item.umidade.toFixed(0)}% umid.`}
-                    </Text>
-                  </View>
-                ))}
-                {clima.length === 0 && <Text style={styles.cardText}>Nenhum dado climático para esta região.</Text>}
-                <Text style={styles.sectionTitle}>Safras disponíveis</Text>
+                <Text style={styles.sectionTitle}>Climatologia anual e sazonal</Text>
+                {latestClimate ? (
+                  <>
+                    <View style={styles.dataRow}><Text style={styles.cardText}>Temperatura média</Text><Text style={styles.cardText}>{latestClimate.temperaturaMedia == null ? '—' : latestClimate.temperaturaMedia.toFixed(1) + ' °C'}</Text></View>
+                    <View style={styles.dataRow}><Text style={styles.cardText}>Chuva anual estimada</Text><Text style={styles.cardText}>{latestClimate.chuvaAnual == null ? '—' : latestClimate.chuvaAnual.toFixed(0) + ' mm/ano'}</Text></View>
+                    <View style={styles.dataRow}><Text style={styles.cardText}>Temperatura janeiro / julho</Text><Text style={styles.cardText}>{latestClimate.temperaturaJaneiro == null ? '—' : latestClimate.temperaturaJaneiro.toFixed(1)} / {latestClimate.temperaturaJulho == null ? '—' : latestClimate.temperaturaJulho.toFixed(1)} °C</Text></View>
+                    <View style={styles.dataRow}><Text style={styles.cardText}>Umidade / radiação</Text><Text style={styles.cardText}>{latestClimate.umidade == null ? '—' : latestClimate.umidade.toFixed(0) + '%'} · {latestClimate.radiacaoSolar == null ? '—' : latestClimate.radiacaoSolar.toFixed(1)}</Text></View>
+                    <Text style={styles.disclaimer}>Valores de climatologia anual e sazonal; não são medições do mês atual.</Text>
+                  </>
+                ) : <Text style={styles.cardText}>Nenhum dado climático para esta região.</Text>}
+<Text style={styles.sectionTitle}>Safras disponíveis</Text>
                 {safras.slice(-5).reverse().map((item) => (
                   <View key={item.id} style={styles.dataRow}>
-                    <Text style={styles.cardText}>{item.anoColheita}</Text>
+                    <Text style={styles.cardText}>{item.anoColheita} · {item.cultura?.nome ?? 'Cultura não informada'}</Text>
                     <Text style={styles.cardText}>
                       {item.rendimentoToneladasHectare == null ? '—' : `${item.rendimentoToneladasHectare.toFixed(2)} t/ha`}
                     </Text>
                   </View>
                 ))}
                 {safras.length === 0 && <Text style={styles.cardText}>Nenhuma safra cadastrada.</Text>}
-                <Text style={styles.disclaimer}>A produtividade da CONAB é uma referência agregada por UF.</Text>
+                <Text style={styles.sectionTitle}>Perfil climático</Text>
+                {clusters.map((item) => <Text key={item.id} style={styles.cardText}>Grupo {item.grupo} · modelo {item.versaoModelo}{item.perfil?.nomeGrupo ? ' · ' + item.perfil.nomeGrupo : ''}</Text>)}
+                <Text style={styles.sectionTitle}>Culturas compatíveis</Text>
+                {compatibilidades.map((item) => (
+                  <View key={item.id} style={styles.dataRow}><Text style={styles.cardText}>{item.cultura.nome}</Text><Text style={styles.cardText}>{(item.compatibilidade * 100).toFixed(1)}% · {item.versaoModelo}</Text></View>
+                ))}
+                {compatibilidades.length === 0 && <Text style={styles.cardText}>Resultados analíticos ainda não carregados.</Text>}
+                <Text style={styles.disclaimer}>Compatibilidade exploratória; não é recomendação agronômica nem previsão de produtividade.</Text>
               </>
             )}
           </View>

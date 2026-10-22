@@ -1,7 +1,7 @@
 # Café PI — Grupo 07
 
-Plataforma multiplataforma de mineração de dados agrícolas e climáticos do
-café, desenvolvida pelo Grupo 07 no Projeto Interdisciplinar do 6º semestre
+Plataforma multiplataforma de análise de dados agrícolas e climáticos por
+município e cultura, desenvolvida pelo Grupo 07 no Projeto Interdisciplinar do 6º semestre
 de Desenvolvimento de Software Multiplataforma (DSM 2026/2).
 
 **Integrantes:** Thiago Cunha, Paulo Ricardo, Vinícius de Araújo e Patrícia
@@ -11,12 +11,12 @@ Nogueira
 
 ## 1. Objetivo do produto
 
-O Café PI cruza condições climáticas e dados de produtividade para apoiar a
-interpretação de regiões produtoras de café. A solução possui:
+O Café PI organiza dados climáticos e de produção por município e cultura
+para apoiar a exploração de resultados analíticos. A solução possui:
 
-- API REST NestJS para autenticação, regiões, clima, safra e clusters;
+- API REST NestJS para autenticação, municípios, clima, produção, culturas, compatibilidade e métricas;
 - dashboard Web Next.js integrado à API;
-- aplicativo Mobile Expo com login, regiões e detalhes de clima/safra;
+- aplicativo Mobile Expo com login, municípios vinculados e detalhe agrícola;
 - PostgreSQL gerenciado por Prisma;
 - pipeline analítico em Python para tratamento, coleta e clusterização;
 - documentação intermediária da Sprint 2 com as evidências que ainda precisam
@@ -34,8 +34,8 @@ interpretado como medição individual de uma propriedade.
 | Banco populado com testes | Implementado localmente pelo seed | Print das tabelas ou Prisma Studio e saída do seed |
 | Commits ativos da equipe | Deve ser conferido no GitHub | Print do histórico filtrado por autor |
 | Ambiente em nuvem | Pendente de configuração final | Print do provedor, banco, API publicada e configuração inicial |
-| Coleta e tratamento | Coleta NASA POWER e IBGE (PAM) executada; notebook de pré-processamento executado | Print da execução, CSV tratado, contagens e validações |
-| Técnica inicial de mineração | K-Means e classificação de aptidão por cultura (notebooks 03 e 04) | Print do resultado, variáveis, `k=2` e métrica do pipeline |
+| Coleta e tratamento | Scripts NASA POWER e CONAB/agrobr criados | Print da execução, CSV tratado, contagens e validações |
+| Técnica inicial de mineração | Cluster climático preliminar implementado | Print do resultado, variáveis, `k=2` e métrica do pipeline |
 | Documentação intermediária | Mantida em atualização | Prints, links e trechos inseridos em `docs/documentacao-sprint2.md` |
 
 O checklist detalhado e o registro oficial de pendências estão em
@@ -51,7 +51,8 @@ O checklist detalhado e o registro oficial de pendências estão em
 | Mobile | React Native, Expo e `expo-secure-store` |
 | Analytics | Python, pandas, scikit-learn e Jupyter |
 | Infraestrutura local | Docker Compose |
-| Fontes externas | NASA POWER (clima) e IBGE/PAM (produção por município e cultura) |
+| Fontes externas | NASA POWER e CONAB via pacote `agrobr` |
+| Nuvem (base assíncrona) | Azure Blob Storage + Azure Service Bus |
 
 ## 4. Estrutura do repositório
 
@@ -83,7 +84,7 @@ O checklist detalhado e o registro oficial de pendências estão em
 ```mermaid
 flowchart LR
     NASA[NASA POWER] --> PIPE[Pipeline Python]
-    IBGE[IBGE PAM] --> PIPE
+    CONAB[CONAB via agrobr] --> PIPE
     PIPE --> CSV[CSV tratado]
     CSV --> IMPORT[Importador idempotente]
     IMPORT --> DB[(PostgreSQL + Prisma)]
@@ -145,6 +146,22 @@ npm run data:import -- clima.csv safra.csv regiao-uf.csv
 O comando `data:import` valida regiões e realiza upsert de clima por
 `regiaoId + data` e de safra por `regiaoId + anoColheita`.
 
+### Azure Blob Storage e Service Bus
+
+A integração assíncrona é ativada somente com
+`AZURE_INTEGRATION_ENABLED=true`. O comando `data:publish` armazena um CSV
+tratado no container privado `data-treated` e publica um evento versionado
+`DataFileAvailable` na fila do Azure Service Bus. O consumidor do backend baixa
+o blob, reutiliza o importador idempotente e confirma a mensagem apenas após o
+processamento.
+
+O script de provisionamento reproduzível está em
+[`infra/azure/provision.ps1`](./infra/azure/provision.ps1). Em produção,
+Blob Storage e Service Bus usam Managed Identity/Entra ID com RBAC. Connection
+strings são aceitas somente no desenvolvimento local por variáveis de
+ambiente não versionadas. O recurso Azure ainda precisa ser criado para que
+as evidências de publicação sejam consideradas concluídas.
+
 ### Web
 
 ```powershell
@@ -190,11 +207,14 @@ Todas as rotas abaixo exigem JWT, exceto login e cadastro.
 | --- | --- | --- | --- |
 | `POST` | `/auth/login` | Público | Emite JWT |
 | `POST` | `/auth/register` | Público | Cadastra produtor |
-| `GET` | `/regioes` | Autenticado | Lista regiões |
+| `GET` | `/regioes?q=&uf=&cultura=&page=&limit=` | Autenticado | Lista municípios paginados; PRODUTOR vê apenas seus vínculos |
+| `GET` | `/regioes/:id` | Autenticado | Detalhe do município |
+| `POST` | `/regioes/:id/usuarios/:userId` | `ADMIN` | Vincula usuário a município |
 | `POST` | `/regioes` | `ADMIN`, `TECNICO` | Cria região |
 | `PATCH` | `/regioes/:id` | `ADMIN`, `TECNICO` | Atualiza região |
 | `DELETE` | `/regioes/:id` | `ADMIN` | Remove região |
-| `GET` | `/clima/:regiaoId?de=&ate=` | Autenticado | Consulta clima por período |
+| `GET` | `/clima/municipios/:id` | Autenticado | Climatologia anual e sazonal |
+| `GET` | `/clima/:regiaoId?de=&ate=` | Autenticado | Série diária legada por período |
 | `POST` | `/clima` | `ADMIN`, `TECNICO` | Cria observação climática |
 | `PATCH` | `/clima/:id` | `ADMIN`, `TECNICO` | Atualiza observação |
 | `DELETE` | `/clima/:id` | `ADMIN` | Remove observação |
@@ -202,7 +222,12 @@ Todas as rotas abaixo exigem JWT, exceto login e cadastro.
 | `POST` | `/safra` | `ADMIN`, `TECNICO` | Cria rendimento |
 | `PATCH` | `/safra/:id` | `ADMIN`, `TECNICO` | Atualiza rendimento |
 | `DELETE` | `/safra/:id` | `ADMIN` | Remove rendimento |
-| `GET` | `/clusters` | Autenticado | Consulta agrupamento climático |
+| `GET` | `/clusters` | Autenticado | Consulta clusters persistidos |
+| `GET` | `/clusters/:id` | Autenticado | Perfil do município |
+| `GET` | `/culturas` | Autenticado | Catálogo de culturas |
+| `GET` | `/compatibilidades/:regiaoId` | Autenticado | Compatibilidade por município |
+| `GET` | `/compatibilidades?cultura=&min=&uf=&page=&limit=` | Autenticado | Ranking paginado de municípios |
+| `GET` | `/modelos/metricas` | Autenticado | Métricas por cultura e versão |
 
 Exemplo de login:
 
@@ -280,22 +305,23 @@ temperatura, precipitação, umidade e radiação solar por latitude e longitude
 Set-Location analytics
 python scripts\coletar_nasa_power.py `
   --regions data\regions.csv `
-  --output data\raw\clima_nasa.csv `
-  --start 20010101 `
-  --end 20251231
+  --output data\processed\clima_nasa.csv `
+  --start 20240101 `
+  --end 20241231
 ```
 
 ### Coleta de safra
 
-O script [coletar_conab.py](./analytics/scripts/coletar_conab.py) baixa a série
-histórica oficial de café da CONAB (arábica e conilon, por UF), lê a aba
-"Produtividade" e converte sacas por hectare para toneladas por hectare
-(1 saca = 60 kg). O pacote `agrobr` não oferece café em `conab.safras`.
+O script [coletar_conab.py](./analytics/scripts/coletar_conab.py) usa
+`agrobr.sync.conab.safras`, consulta café por safra e UF e converte
+produtividade de kg/ha para toneladas/ha.
 
 ```powershell
 Set-Location analytics
-python scripts\coletar_conab.py --baixar `
-  --output data\raw\safra_conab.csv
+python scripts\coletar_conab.py `
+  --output data\processed\safra_conab.csv `
+  --safra 2024/25 `
+  --uf MG
 ```
 
 ### Tratamento e cluster
@@ -303,10 +329,12 @@ python scripts\coletar_conab.py --baixar `
 O pipeline analítico segue a ordem:
 
 ```text
-00_preprocessamento → 01_ingestao → 02_correlacao → 03_kmeans → 04_regressao
+00_preprocessamento → 02_correlacao → 03_kmeans → 04_classificacao → 01_ingestao (exportação JSON)
 ```
 
-O endpoint `/clusters` aplica o agrupamento preliminar sobre:
+O notebook 01 exporta um artefato versionado para o importador do backend; ele não grava diretamente no banco. O endpoint `/clusters/:id` consulta os grupos persistidos pelo pipeline.
+
+O notebook 03 calcula o agrupamento climático; a API consulta os resultados persistidos por município. As variáveis usadas são:
 
 - temperatura média;
 - precipitação média;

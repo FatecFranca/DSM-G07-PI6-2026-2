@@ -30,26 +30,34 @@ pip install -r requirements.txt
 python scripts\coletar_clima_municipios.py
 python scripts\coletar_ibge_pam.py
 
-# 2) notebooks, na ordem
+# 2) notebooks (execute 00, 02, 03 e 04; depois exporte pelo 01)
+cd notebooks
 jupyter notebook
+```
+
+Depois de executar os notebooks 00, 02, 03 e 04, execute 01 para gerar o artefato e importe-o na API:
+
+```powershell
+cd ..\..\backend
+npm run data:import:agricultural -- ..\analytics\data\processed\artefato_agricola_v1.json
 ```
 
 | Notebook | Conteúdo | Depende do Postgres? |
 | --- | --- | --- |
 | `00_preprocessamento.ipynb` | Tratamento, novas variáveis e rótulos de aptidão | Não |
-| `01_ingestao.ipynb` | Grava municípios com café e histórico de café no banco | Sim |
+| `01_ingestao.ipynb` | Exporta um artefato JSON versionado para o importador da API | Não |
 | `02_correlacao.ipynb` | Correlação de Spearman: clima x área de cada cultura | Não |
 | `03_kmeans.ipynb` | Agrupamento (não supervisionado) e cruzamento com as culturas | Não |
-| `04_classificacao.ipynb` | Classificação supervisionada, matrizes de confusão e recomendação | Não |
+| `04_classificacao.ipynb` | Classificação supervisionada, matrizes de confusão e compatibilidade exploratória | Não |
 
-Os notebooks 02 a 04 leem só de `data/processed/` (saída do 00).
+Os notebooks 02 a 04 leem só de `data/processed/` (saída do 00). O notebook 01 exporta os resultados integrados depois que 00, 02, 03 e 04 gerarem seus arquivos.
 
 ## Dois algoritmos, de natureza diferente
 
 | Algoritmo | Tipo | Pergunta |
 | --- | --- | --- |
 | **K-Means** | Não supervisionado | Quais municípios têm clima parecido? |
-| **Classificação** (regressão logística, Random Forest e Gradient Boosting, comparados) | Supervisionado | O município é apto para a cultura X? |
+| **Classificação** (regressão logística, Random Forest e Gradient Boosting, comparados) | Supervisionado | O município corresponde ao rótulo histórico de área colhida da cultura X? |
 
 A validação da classificação é **espacial**: municípios em células de 1° não ficam
 em treino e teste ao mesmo tempo.
@@ -73,8 +81,7 @@ em treino e teste ao mesmo tempo.
   Laranja e feijão são raros, e os modelos foram balanceados para achá-los (recall
   alto, precisão baixa), então a acurácia fica abaixo do baseline.
 - **Cultura dominante (multiclasse):** acurácia 72%, balanceada 51%.
-- **Recomendação:** `data/processed/compatibilidade_culturas.csv` (probabilidade de
-  "apto" por município e cultura, calculada fora da amostra, com ranking).
+- **Saída exploratória:** `data/processed/compatibilidade_culturas.csv` contém a probabilidade fora da amostra de corresponder ao rótulo histórico de área colhida, com ranking; não é recomendação agronômica.
 
 ## Saídas principais (`data/processed/`)
 

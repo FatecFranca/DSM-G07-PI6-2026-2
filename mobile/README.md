@@ -34,3 +34,8 @@ npm start
 O token é armazenado com `expo-secure-store`, não em `localStorage`. O backend
 continua responsável por validar JWT e permissões; o aplicativo apenas ajusta
 a interface conforme o perfil retornado.
+
+
+## Dados municipais
+
+A lista consome municípios vinculados ao usuário; o detalhe mostra climatologia anual e sazonal, produção por cultura, cluster e compatibilidades versionadas. Compatibilidade é exploratória, não recomendação agronômica. Cache offline não está implementado nesta etapa.

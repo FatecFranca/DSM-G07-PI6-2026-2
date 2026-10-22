@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -32,6 +33,12 @@ import {
 export class ClimaController {
   constructor(private readonly climaService: ClimaService) {}
 
+  @Get('municipios/:regiaoId')
+  @ApiOperation({ summary: 'Climatologia anual e sazonal do município' })
+  findClimatologia(@Param('regiaoId') regiaoId: string, @Req() req: { user: { id: string; perfil: string } }) {
+    return this.climaService.findClimatologia(regiaoId, req.user);
+  }
+
   @Get(':regiaoId')
   @ApiOperation({
     summary: 'Histórico climático da região com filtro opcional de período',
@@ -40,8 +47,9 @@ export class ClimaController {
   findByRegiao(
     @Param('regiaoId') regiaoId: string,
     @Query() query: ClimaQueryDto,
+    @Req() req: { user: { id: string; perfil: string } },
   ) {
-    return this.climaService.findByRegiao(regiaoId, query);
+    return this.climaService.findByRegiao(regiaoId, query, req.user);
   }
 
   @Post()

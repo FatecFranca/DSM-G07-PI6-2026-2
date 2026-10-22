@@ -16,14 +16,19 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
     "data:import": "ts-node scripts/import-tratados.ts",
+    "data:publish": "ts-node scripts/publish-data-file.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "data:import:agricultural": "ts-node scripts/import-agricultural-results.ts"
   },
   "dependencies": {
+    "@azure/identity": "^4.10.2",
+    "@azure/service-bus": "^7.9.5",
+    "@azure/storage-blob": "^12.28.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.1",

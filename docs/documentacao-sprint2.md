@@ -40,8 +40,8 @@ do estado da Sprint 2.
 | Aplicativo mobile consumindo a API | Integrado para consulta | [E-03](./evidencias/README.md#e-03--mobile-integrado) |
 | Banco de dados implementado e populado com dados de teste | Concluído no ambiente local | [E-04](./evidencias/README.md#e-04--banco-de-dados) |
 | Commits ativos de todos os integrantes no GitHub | Histórico local registrado; confirmação no GitHub pendente | [E-05](./evidencias/README.md#e-05--commits) |
-| Ambiente em nuvem criado, mesmo que parcialmente | Pendente de configuração externa | [E-06](./evidencias/README.md#e-06--nuvem) |
-| Documentação da configuração inicial da nuvem | Pendente de configuração externa | [E-06](./evidencias/README.md#e-06--nuvem) |
+| Ambiente em nuvem criado, mesmo que parcialmente | Base Azure implementada; recursos externos pendentes | [E-06](./evidencias/README.md#e-06--nuvem) |
+| Documentação da configuração inicial da nuvem | Script e contratos documentados; publicação externa pendente | [E-06](./evidencias/README.md#e-06--nuvem) |
 | Coleta e tratamento dos dados | Scripts validados; coleta real pendente | [E-07](./evidencias/README.md#e-07-e-e-08--analytics) |
 | Aplicação de técnica inicial de mineração de dados | Implementado preliminarmente | [E-08](./evidencias/README.md#e-07-e-e-08--analytics) |
 | Documentação intermediária atualizada com evidências | Atualizada | Este documento |
@@ -276,14 +276,14 @@ deve ser documentada de forma reproduzível.
 
 | Item | Configuração |
 | --- | --- |
-| Provedor de nuvem | A preencher |
-| Região/ localização | A preencher |
-| Serviço utilizado | A preencher |
-| Sistema operacional ou runtime | A preencher |
-| Forma de implantação | A preencher |
+| Provedor de nuvem | Microsoft Azure (Blob Storage e Service Bus) |
+| Região/ localização | Definir no provisionamento, conforme créditos e disponibilidade |
+| Serviço utilizado | Storage Account com container privado `data-treated` e Service Bus Standard com fila e dead-letter |
+| Sistema operacional ou runtime | API NestJS/Node.js; provisionamento por Azure CLI/PowerShell |
+| Forma de implantação | Script idempotente em `infra/azure/provision.ps1`; publicação da API ainda pendente |
 | URL ou endpoint público | A preencher |
 | Banco de dados | A preencher |
-| Variáveis de ambiente | A preencher |
+| Variáveis de ambiente | `AZURE_INTEGRATION_ENABLED`, nomes dos recursos e credenciais locais opcionais; segredos ficam fora do Git |
 
 Não registrar neste documento valores de senhas, tokens ou chaves privadas.
 Quando necessário, deve ser documentado apenas o nome da variável e o local
@@ -293,7 +293,7 @@ seguro onde ela é configurada.
 
 Documentar, em ordem, os passos necessários para reproduzir a configuração:
 
-1. criação do recurso no provedor escolhido;
+1. criação do Resource Group, Storage Account, container, namespace Service Bus e fila pelo script `infra/azure/provision.ps1`;
 2. configuração do runtime ou dos contêineres;
 3. definição das variáveis de ambiente;
 4. configuração do banco de dados e das migrations;
@@ -304,7 +304,7 @@ Documentar, em ordem, os passos necessários para reproduzir a configuração:
 ### 5.3. Evidências
 
 As evidências desta seção devem demonstrar a configuração efetivamente
-publicada. Como o ambiente remoto ainda não foi configurado nesta entrega, não
+publicada. Como os recursos remotos ainda não foram configurados nesta entrega, não
 há print ou endpoint público a declarar como concluído.
 
 Para finalizar este critério, anexar:
@@ -319,7 +319,12 @@ Para finalizar este critério, anexar:
 
 **Evidências da equipe:**
 
-> **Status atual:** pendente de configuração externa.
+> **Status atual:** base de integração implementada; configuração externa pendente.
+>
+> O backend possui adaptadores para Blob Storage e Service Bus, evento
+> `DataFileAvailable` versionado, consumidor com confirmação após importação e
+> dead-letter/retry providos pelo Service Bus. O fluxo manual
+> `npm run data:import` continua disponível.
 >
 > A execução local validada não substitui a evidência de nuvem. O ambiente
 > local possui PostgreSQL em Docker, API NestJS na porta `3001` e Web Next.js
@@ -462,3 +467,36 @@ regiao-uf.csv` para importar arquivos tratados. O importador valida regiões,
 atualiza clima por `regiaoId + data` e faz upsert de safra por
 `regiaoId + anoColheita`; o arquivo `regiao-uf.csv` torna explícita a
 correspondência entre a UF agregada da CONAB e a região produtora.
+
+
+---
+
+## Adaptação municipal e multiculturas — implementação em andamento
+
+Esta seção registra as alterações de código iniciadas após a Sprint 2; não substitui as evidências anteriores nem declara execução em banco, publicação ou carga oficial.
+
+### Back-end
+
+- O schema Prisma foi ampliado com código IBGE/UF, cultura, safra por município/cultura/ano, climatologia anual/sazonal e tabelas versionadas de clusters, perfis, compatibilidades e métricas.
+- Foi criada a migration aditiva 20261022090000_agricultural_model. Ela preserva a tabela de clima diário e dados históricos de safra, e associa os registros legados à cultura Café para manter a chave municipal/cultura/ano íntegra.
+- GET /regioes agora prevê busca, filtros por UF/cultura, paginação e visibilidade de municípios vinculados para PRODUTOR; GET /regioes/:id e vínculo ADMIN também foram adicionados.
+- Foram adicionadas rotas de culturas, climatologia agregada anual/sazonal, compatibilidades, clusters persistidos e métricas de modelos. A autorização por vínculo também se aplica às consultas de clima, safra, clusters e compatibilidade.
+- O importador backend/scripts/import-agricultural-results.ts recebe JSON versionado e executa carga transacional em lotes. Safras no arquivo são snapshot integral dos municípios/culturas/anos enviados. O seed local tem culturas e três municípios de demonstração; não é carga oficial.
+- CORS usa a variável CORS_ORIGINS. A série climática diária permanece como contrato legado durante a transição.
+
+### Web e Mobile
+
+- Os tipos e clientes HTTP foram alinhados aos contratos paginados e às entidades municipais/multiculturas.
+- O Web apresenta busca por município, UF/cultura, paginação, climatologia, produção, compatibilidades, grupos climáticos e métricas/matriz de confusão.
+- O Mobile consulta municípios do usuário e apresenta climatologia, safra, cluster e compatibilidades. Cache offline permanece pendente.
+
+### Pendências antes de considerar a adaptação concluída
+
+- Executar geração do Prisma Client e revisar a migration em banco descartável antes de aplicá-la a qualquer banco compartilhado.
+- Produzir e revisar os artefatos municipais do pipeline em etapa futura; o diretório analytics/data/processed não contém resultados municipais nesta revisão e a fonte/abrangência dos dados oficiais foi explicitamente adiada pelo usuário.
+- Carregar dados oficiais e conferir contagens, unidades, cobertura e integridade referencial.
+- Revisar os testes, build e lint do backend, Web e Mobile após a geração do Prisma Client.
+- Confirmar com a equipe o escopo multiculturas e a semântica de compatibilidade; a definição da cobertura geográfica e a integração de dados oficiais ficam para etapa futura, conforme solicitado.
+- Concluir documentação do importador/pipeline e validar fluxos reais em Web e dispositivo Mobile.
+
+A compatibilidade exibida é exploratória, baseada nos dados que forem importados. Não deve ser tratada como recomendação de plantio ou previsão de produtividade.

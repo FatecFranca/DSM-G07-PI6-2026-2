@@ -87,6 +87,7 @@ npm run test           # testes unitários
 npm run test:e2e       # testes de integração
 npm run prisma:seed    # popula dados locais de forma reproduzível
 npm run data:import -- clima.csv safra.csv regiao-uf.csv # importa CSVs tratados
+npm run data:publish -- arquivo.csv clima [blob-name] [tipo:caminho] # envia Blob e publica evento
 ```
 
 O `tsconfig.json` do back-end inclui somente `src`, que é o diretório de
@@ -100,3 +101,54 @@ Não versionar `.env`, credenciais, tokens ou arquivos de dados sensíveis.
 pela combinação `regiaoId + data` e faz upsert de safras pela chave
 `regiaoId + anoColheita`. O terceiro CSV deve conter `regiaoId,uf` e explicitar
 o mapeamento estadual usado para associar a publicação agregada da CONAB.
+
+## Azure Blob Storage e Service Bus
+
+O fluxo assíncrono é opcional e fica desabilitado quando
+`AZURE_INTEGRATION_ENABLED=false`. O script
+`scripts/publish-data-file.ts` envia um CSV tratado para o container privado
+`data-treated` e publica um evento `DataFileAvailable` na fila configurada.
+Para safra, o parâmetro opcional `tipo:caminho` pode enviar o CSV
+`regiao-uf` relacionado.
+
+Em produção, configure `AZURE_STORAGE_ACCOUNT_NAME` e
+`AZURE_SERVICE_BUS_NAMESPACE` e conceda à identidade gerenciada os papéis
+`Storage Blob Data Contributor`, `Azure Service Bus Data Sender` e
+`Azure Service Bus Data Receiver`. Em desenvolvimento local, connection
+strings podem ser usadas apenas por variáveis de ambiente não versionadas.
+
+O consumidor NestJS confirma a mensagem somente após o importador idempotente
+concluir. Falhas permanecem disponíveis para retry e dead-letter no Service
+Bus. O provisionamento inicial está em
+`infra/azure/provision.ps1`; ele não publica a API nem exibe segredos.
+
+
+## Adaptação municipal e multiculturas
+
+A migration 20261022090000_agricultural_model adiciona código IBGE/UF, catálogo de culturas, produção por município/cultura/ano, climatologia anual/sazonal e tabelas versionadas de cluster, compatibilidade e métricas. A série diária e rotas antigas continuam disponíveis durante a transição; safras legadas podem permanecer sem cultura.
+
+Antes de aplicar em ambiente compartilhado, revisar e fazer backup. Após gerar o cliente Prisma, aplique com npx prisma migrate deploy e depois npm run prisma:seed. O seed é demonstrativo, não representa a coleta oficial completa.
+
+Rotas novas, todas com JWT:
+
+| Método | Rota | Finalidade |
+| --- | --- | --- |
+| GET | /regioes?q=&uf=&cultura=&page=&limit= | Busca paginada; PRODUTOR recebe apenas vínculos |
+| GET | /regioes/:id | Detalhe municipal com autorização |
+| POST | /regioes/:id/usuarios/:userId | Vínculo municipal (ADMIN) |
+| GET | /clima/municipios/:id | Climatologia agregada anual e sazonal |
+| GET | /culturas | Catálogo |
+| GET | /compatibilidades/:id | Ranking de culturas para município |
+| GET | /compatibilidades?cultura=&min=&uf=&page=&limit= | Ranking de municípios |
+| GET | /clusters/:id | Grupo e perfil versionados |
+| GET | /modelos/metricas?cultura=&versao= | Métricas de validação |
+
+GET /regioes retorna { data, total, page, limit, totalPages }. Safras aceitam filtro de cultura e dados de área, produção e rendimento. PRODUTOR só consulta municípios vinculados. CORS usa CORS_ORIGINS, lista separada por vírgula.
+
+### Importar artefato analítico versionado
+
+O pipeline deve gerar JSON validado com código IBGE, cultura, unidades e versão. Comando: npm run data:import:agricultural -- resultados.json
+
+O objeto raiz exige schemaVersion: 1, modelVersion, dataVersion (opcional), cultures (name, slug) e municipalities (code, name, uf, latitude, longitude). Arrays opcionais: harvests (code, crop, year, areaHa, productionT, yieldTPerHa), climate (uma linha por code, avgTemp, minTemp, avgDailyRain, annualRain, humidity, solarRadiation, januaryTemp, julyTemp, julyMinTemp, drySeasonRain, summerRain, thermalAmplitude, rainfallContrast), clusters, clusterProfiles, compatibilities (score de 0 a 1) e metrics. A importação valida referências e faixa geográfica e substitui resultados analíticos da mesma versão em transação, em lotes de 1.000 linhas. Safras são tratadas como snapshot completo para os municípios, culturas e anos incluídos no arquivo; não use um arquivo parcial de atualização. Ela não coleta dados nem executa o pipeline.
+
+Os dados municipais/analíticos completos ainda não estão no repositório. O carregamento real depende da exportação e revisão dos artefatos.

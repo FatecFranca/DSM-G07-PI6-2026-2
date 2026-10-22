@@ -13,7 +13,7 @@ senhas, URLs privadas ou outras credenciais.
 | E-03 | Front-end Mobile | [App Expo](../../mobile/App.tsx) e [cliente HTTP](../../mobile/src/api.ts) | Reproduzível |
 | E-04 | Banco de dados | [Schema Prisma](../../backend/prisma/schema.prisma), seed e PostgreSQL local | Reproduzível |
 | E-05 | Commits da equipe | [Histórico Git](./git-historico.txt) | Reproduzível |
-| E-06 | Nuvem | Provedor, banco e API publicados | Pendente de configuração externa |
+| E-06 | Nuvem | Arquitetura Azure, script de provisionamento e publicação real | Base implementada; publicação externa pendente |
 | E-07 | Coleta e tratamento | [Scripts de coleta](../../analytics/scripts/) e [README analytics](../../analytics/README.md) | Scripts validados |
 | E-08 | Mineração de dados | [Clusters](../../backend/src/clusters/) e notebooks analíticos | Resultado preliminar |
 | E-09 | Validação técnica | [Backend](./backend-validacao.txt), [Web](./web-validacao.txt), [Mobile](./mobile-validacao.txt) e [Analytics](./analytics-validacao.txt) | Aprovado |
@@ -134,14 +134,17 @@ e confirmar a participação de todos os integrantes.
 
 ## E-06 — Nuvem
 
-Esta evidência não pode ser inventada localmente. Ainda é necessário:
+A base de integração foi implementada, mas esta evidência não pode ser
+inventada localmente. O repositório agora contém:
 
-1. criar o provedor e o PostgreSQL remoto;
-2. publicar a API;
-3. configurar variáveis de ambiente sem registrá-las;
-4. executar migrations e seed;
-5. testar a URL pública;
-6. adicionar prints anonimizados nesta pasta.
+1. [script Azure CLI/PowerShell](../../infra/azure/provision.ps1);
+2. [adaptadores Blob e Service Bus](../../backend/src/cloud/);
+3. [consumidor de arquivos](../../backend/src/cloud/data-file-consumer.service.ts);
+4. comando `npm run data:publish` documentado no README do backend.
+
+Ainda é necessário criar os recursos Azure, configurar a identidade gerenciada,
+publicar a aplicação e anexar prints anonimizados de recurso, serviço,
+health check, endpoint e custos/limites.
 
 ## E-07 e E-08 — Analytics
 

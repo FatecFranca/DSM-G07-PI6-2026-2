@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -40,8 +41,9 @@ export class SafraController {
   findByRegiao(
     @Param('regiaoId') regiaoId: string,
     @Query() query: SafraQueryDto,
+    @Req() req: { user: { id: string; perfil: string } },
   ) {
-    return this.safraService.findByRegiao(regiaoId, query);
+    return this.safraService.findByRegiao(regiaoId, query, req.user);
   }
 
   @Post()

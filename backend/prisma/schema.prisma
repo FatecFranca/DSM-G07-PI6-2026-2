@@ -1,69 +1,154 @@
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
-
 enum PerfilUsuario {
   ADMIN
   TECNICO
   PRODUTOR
 }
-
 model Usuario {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  senhaHash    String
-  nome         String
-  perfil       PerfilUsuario @default(PRODUTOR)
-  criadoEm     DateTime      @default(now())
-  atualizadoEm DateTime      @updatedAt
-
+  id String @id @default(cuid())
+  email String @unique
+  senhaHash String
+  nome String
+  perfil PerfilUsuario @default(PRODUTOR)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
   regioes RegiaoProdutora[] @relation("UsuarioRegioes")
 }
-
 model RegiaoProdutora {
-  id          String  @id @default(cuid())
-  nomeRegiao  String
-  pais        String
-  latitude    Float?
-  longitude   Float?
-
+  id String @id @default(cuid())
+  nomeRegiao String
+  pais String
+  latitude Float?
+  longitude Float?
+  codigoIbge String? @unique
+  uf String?
   condicoes CondicaoClimatica[]
-  safras    SafraRendimento[]
-  usuarios  Usuario[]           @relation("UsuarioRegioes")
-
+  climatologias ClimaRegiao[]
+  safras SafraRendimento[]
+  clusters ClusterRegiao[]
+  compatibilidades CompatibilidadeCultura[]
+  usuarios Usuario[] @relation("UsuarioRegioes")
+  @@index([uf])
   @@map("Regiao_Produtora")
 }
-
 model CondicaoClimatica {
-  id               String   @id @default(cuid())
-  regiaoId         String
-  data             DateTime
+  id String @id @default(cuid())
+  regiaoId String
+  data DateTime
   temperaturaMedia Float?
-  precipitacao     Float?
-  umidade          Float?
-  radiacaoSolar    Float?
-
+  precipitacao Float?
+  umidade Float?
+  radiacaoSolar Float?
   regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
-
   @@index([regiaoId])
   @@map("Condicao_Climatica")
 }
-
+model Cultura {
+  id String @id @default(cuid())
+  nome String @unique
+  slug String @unique
+  safras SafraRendimento[]
+  compatibilidades CompatibilidadeCultura[]
+  metricas MetricaModelo[]
+  @@map("Cultura")
+}
 model SafraRendimento {
-  id                        String @id @default(cuid())
-  regiaoId                  String
-  anoColheita               Int
-  diasCrescimento           Int?
+  id String @id @default(cuid())
+  regiaoId String
+  culturaId String
+  anoColheita Int
+  areaColhidaHa Float?
+  producaoT Float?
+  diasCrescimento Int?
   rendimentoToneladasHectare Float?
-
   regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
-
-  @@unique([regiaoId, anoColheita])
-  @@index([regiaoId])
+  cultura Cultura @relation(fields: [culturaId], references: [id], onDelete: Restrict)
+  @@unique([regiaoId, culturaId, anoColheita])
+  @@index([regiaoId, culturaId])
   @@map("Safra_Rendimento")
+}
+model ClimaRegiao {
+  id String @id @default(cuid())
+  regiaoId String
+  temperaturaMedia Float?
+  temperaturaMin Float?
+  chuvaMediaDiaria Float?
+  chuvaAnual Float?
+  umidade Float?
+  radiacaoSolar Float?
+  temperaturaJaneiro Float?
+  temperaturaJulho Float?
+  temperaturaMinimaJulho Float?
+  chuvaEstacaoSeca Float?
+  chuvaVerao Float?
+  amplitudeTermica Float?
+  contrasteChuva Float?
+  periodoInicio Int?
+  periodoFim Int?
+  versaoDados String?
+  importadoEm DateTime @default(now())
+  regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
+  @@unique([regiaoId, versaoDados])
+  @@index([regiaoId, versaoDados])
+  @@map("Clima_Regiao")
+}
+model ClusterRegiao {
+  id String @id @default(cuid())
+  regiaoId String
+  grupo Int
+  nomeGrupo String?
+  versaoModelo String
+  regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
+  @@unique([regiaoId, versaoModelo])
+  @@index([versaoModelo, grupo])
+  @@map("Cluster_Regiao")
+}
+model ClusterPerfil {
+  id String @id @default(cuid())
+  grupo Int
+  nomeGrupo String?
+  quantidadeMunicipios Int
+  variaveis Json
+  versaoModelo String
+  @@unique([grupo, versaoModelo])
+  @@map("Cluster_Perfil")
+}
+model CompatibilidadeCultura {
+  id String @id @default(cuid())
+  regiaoId String
+  culturaId String
+  compatibilidade Float
+  ranking Int?
+  aptoReal Boolean?
+  versaoModelo String
+  aviso String?
+  regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
+  cultura Cultura @relation(fields: [culturaId], references: [id], onDelete: Cascade)
+  @@unique([regiaoId, culturaId, versaoModelo])
+  @@index([culturaId, compatibilidade])
+  @@map("Compatibilidade_Cultura")
+}
+model MetricaModelo {
+  id String @id @default(cuid())
+  culturaId String
+  algoritmo String
+  acuracia Float?
+  acuraciaBalanceada Float?
+  precisao Float?
+  recall Float?
+  f1 Float?
+  auc Float?
+  baseline Float?
+  matrizConfusao Json?
+  versaoModelo String
+  executadoEm DateTime @default(now())
+  cultura Cultura @relation(fields: [culturaId], references: [id], onDelete: Cascade)
+  @@index([culturaId, versaoModelo])
+  @@map("Metrica_Modelo")
 }

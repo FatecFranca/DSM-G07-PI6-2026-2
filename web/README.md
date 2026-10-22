@@ -54,3 +54,8 @@ Authorization: Bearer <accessToken>
 Os tipos de resposta e os caminhos estão centralizados em
 `src/lib/api.ts`. O mobile deve manter a URL da API em configuração própria
 de ambiente e consumir a API NestJS, sem duplicar regras de negócio.
+
+
+## Contrato municipal
+
+O dashboard usa a busca paginada de municípios, catálogo de culturas, climatologia anual e sazonal, produção por cultura, compatibilidades e métricas do modelo. Compatibilidade é exploratória, não recomendação de plantio. O dashboard apresenta grupos climáticos persistidos quando carregados. Até a importação dos dados analíticos, as telas vazias informam que os resultados não estão disponíveis.
