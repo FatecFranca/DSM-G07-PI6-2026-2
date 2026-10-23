@@ -13,6 +13,7 @@ export default function LoginPage() {
         <LoginForm />
         <div className="mt-5 flex justify-between text-sm text-[#d9cdb8]">
           <Link href="/">Landing</Link>
+          <Link href="/cadastro">Criar conta</Link>
         </div>
       </div>
     </div>

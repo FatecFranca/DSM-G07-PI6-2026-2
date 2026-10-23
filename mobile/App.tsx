@@ -26,6 +26,7 @@ import { clearSession, loadSession, saveSession } from './src/session';
 export default function App() {
   const [session, setSession] = useState<AuthResponse | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [showRegister, setShowRegister] = useState(false);
 
   useEffect(() => {
     loadSession()
@@ -38,7 +39,11 @@ export default function App() {
   }
 
   if (!session) {
-    return <LoginScreen onLogin={setSession} />;
+    return showRegister ? (
+      <RegisterScreen onRegister={setSession} onBack={() => setShowRegister(false)} />
+    ) : (
+      <LoginScreen onLogin={setSession} onCreateAccount={() => setShowRegister(true)} />
+    );
   }
 
   return (
@@ -52,7 +57,13 @@ export default function App() {
   );
 }
 
-function LoginScreen({ onLogin }: { onLogin: (session: AuthResponse) => void }) {
+function LoginScreen({
+  onLogin,
+  onCreateAccount,
+}: {
+  onLogin: (session: AuthResponse) => void;
+  onCreateAccount: () => void;
+}) {
   const [email, setEmail] = useState('tecnico@cafe-pi.local');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -97,7 +108,101 @@ function LoginScreen({ onLogin }: { onLogin: (session: AuthResponse) => void }) 
         <Pressable disabled={loading} onPress={handleLogin} style={styles.primaryButton}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Entrar</Text>}
         </Pressable>
+        <Pressable onPress={onCreateAccount}>
+          <Text style={styles.link}>Ainda não tem conta? Criar conta</Text>
+        </Pressable>
       </View>
+      <StatusBar style="dark" />
+    </SafeAreaView>
+  );
+}
+
+function RegisterScreen({
+  onRegister,
+  onBack,
+}: {
+  onRegister: (session: AuthResponse) => void;
+  onBack: () => void;
+}) {
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmacao, setConfirmacao] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleRegister() {
+    if (!nome.trim() || !email.trim()) {
+      Alert.alert('Preencha os campos', 'Informe seu nome e seu e-mail.');
+      return;
+    }
+    if (senha.length < 6) {
+      Alert.alert('Senha muito curta', 'A senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
+    if (senha !== confirmacao) {
+      Alert.alert('Senhas diferentes', 'A confirmação precisa ser igual à senha.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.register(nome.trim(), email.trim(), senha);
+      await saveSession(response);
+      onRegister(response);
+    } catch (error) {
+      Alert.alert(
+        'Não foi possível criar a conta',
+        error instanceof ApiError ? error.message : 'Verifique a conexão com a API.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Text style={styles.eyebrow}>CAFÉ PI</Text>
+        <Text style={styles.title}>Criar conta</Text>
+        <Text style={styles.subtitle}>
+          Cadastre-se para consultar clima, produção e análise por município.
+        </Text>
+        <TextInput
+          autoCapitalize="words"
+          placeholder="Nome completo"
+          style={styles.input}
+          value={nome}
+          onChangeText={setNome}
+        />
+        <TextInput
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholder="E-mail"
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          placeholder="Senha (mínimo 6 caracteres)"
+          secureTextEntry
+          style={styles.input}
+          value={senha}
+          onChangeText={setSenha}
+        />
+        <TextInput
+          placeholder="Confirmar senha"
+          secureTextEntry
+          style={styles.input}
+          value={confirmacao}
+          onChangeText={setConfirmacao}
+        />
+        <Pressable disabled={loading} onPress={handleRegister} style={styles.primaryButton}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Criar conta</Text>}
+        </Pressable>
+        <Pressable onPress={onBack}>
+          <Text style={styles.link}>Já tenho conta? Entrar</Text>
+        </Pressable>
+      </ScrollView>
       <StatusBar style="dark" />
     </SafeAreaView>
   );
@@ -320,6 +425,7 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   header: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
   logout: { color: '#166534', fontWeight: '700', paddingTop: 5 },
+  link: { color: '#166534', fontSize: 14, fontWeight: '700', paddingVertical: 8, textAlign: 'center' },
   card: { backgroundColor: '#fff', borderRadius: 16, gap: 5, padding: 18 },
   selectedCard: { borderColor: '#166534', borderWidth: 2 },
   cardTitle: { color: '#17221a', fontSize: 18, fontWeight: '700' },

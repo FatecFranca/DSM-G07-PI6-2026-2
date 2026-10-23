@@ -18,6 +18,7 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 }
 export const api = {
  login(email: string, senha: string) { return request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, senha }) }); },
+ register(nome: string, email: string, senha: string) { return request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify({ nome, email, senha }) }); },
  regioes(token: string, filters: { q?: string; uf?: string; cultura?: string; page?: number; limit?: number } = {}) { const q = new URLSearchParams(); Object.entries(filters).forEach(([k,v]) => { if (v !== undefined && v !== '') q.set(k, String(v)); }); return request<Page<Regiao>>('/regioes?' + q.toString(), {}, token); },
  culturas(token: string) { return request<Cultura[]>('/culturas', {}, token); },
  clima(regiaoId: string, token: string) { return request<Climatologia | null>('/clima/municipios/' + regiaoId, {}, token); },
