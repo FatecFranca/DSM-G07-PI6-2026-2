@@ -448,7 +448,7 @@ Também executar `git diff --check` antes do commit.
 - [README do Mobile](./mobile/README.md)
 - [README de analytics](./analytics/README.md)
 - [Explicação do pré-processamento](./analytics/docs/explicacao-preprocessamento.md)
-- [Regras do Copilot](./.github/copilot-instructions.md)
+
 
 ## 13. Política de segurança e Git
 
