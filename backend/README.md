@@ -1,4 +1,4 @@
-# Café PI - API
+# Plataforma agrícola - API
 
 API RESTful da plataforma de mineração de dados agrícolas e climáticos do café.
 O back-end usa NestJS, Prisma e PostgreSQL.

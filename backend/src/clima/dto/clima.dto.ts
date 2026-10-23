@@ -1,14 +1,5 @@
-import {
-  ApiProperty,
-  ApiPropertyOptional,
-  PartialType,
-} from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateClimaDto {
   @ApiProperty()

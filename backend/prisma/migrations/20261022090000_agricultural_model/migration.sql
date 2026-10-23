@@ -1,4 +1,4 @@
-﻿BEGIN;
+BEGIN;
 
 ALTER TABLE "Regiao_Produtora" ADD COLUMN "codigoIbge" TEXT, ADD COLUMN "uf" TEXT;
 CREATE UNIQUE INDEX "Regiao_Produtora_codigoIbge_key" ON "Regiao_Produtora"("codigoIbge");

@@ -6,7 +6,7 @@ applyTo: "backend/**/*,web/**/*"
 # Stack Sprint 1
 
 - `backend/`: NestJS + Prisma; módulos por domínio (`auth`, `regioes`, `clima`, `safra`).
-- `web/`: Next.js App Router; páginas estáticas em `src/app/` (landing, `dashboard`, `login`).
+- `web/`: Next.js App Router; páginas estáticas em `src/app/` (Home, `dashboard`, `login`).
 - Schema Prisma em `backend/prisma/schema.prisma`; env via `backend/.env.example`.
 - PostgreSQL local: `docker compose up -d` na raiz.
 - Porta API: `3001` (Swagger em `/api`); web: `3000`.

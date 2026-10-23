@@ -27,6 +27,14 @@ export default function RegisterForm() {
       setError("A senha precisa ter pelo menos 6 caracteres.");
       return;
     }
+    if (!nome.trim()) {
+      setError("Informe seu nome completo.");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Informe um e-mail válido.");
+      return;
+    }
     if (senha !== confirmacao) {
       setError("A confirmação precisa ser igual à senha.");
       return;
@@ -55,6 +63,7 @@ export default function RegisterForm() {
       </label>
       <input
         id="nome"
+        name="nome"
         className={inputClass}
         type="text"
         value={nome}
@@ -68,6 +77,7 @@ export default function RegisterForm() {
       </label>
       <input
         id="email"
+        name="email"
         className={inputClass}
         type="email"
         value={email}
@@ -81,6 +91,7 @@ export default function RegisterForm() {
       </label>
       <input
         id="senha"
+        name="senha"
         className={inputClass}
         type="password"
         value={senha}
@@ -95,6 +106,7 @@ export default function RegisterForm() {
       </label>
       <input
         id="confirmacao"
+        name="confirmacao"
         className={inputClass}
         type="password"
         value={confirmacao}
@@ -103,7 +115,7 @@ export default function RegisterForm() {
         autoComplete="new-password"
         required
       />
-      {error && <p className="text-sm text-[#f0a7a0]">{error}</p>}
+      {error && <p role="alert" className="text-sm text-[#f0a7a0]">{error}</p>}
       <button
         type="submit"
         className="mt-1 w-full bg-[#c4a35a] px-3.5 py-3.5 font-semibold text-[#0f1a0f] transition hover:bg-[#d8ba70] disabled:cursor-wait disabled:opacity-65"

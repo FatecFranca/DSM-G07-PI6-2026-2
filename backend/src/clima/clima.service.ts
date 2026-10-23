@@ -1,17 +1,21 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  ClimaQueryDto,
-  CreateClimaDto,
-  UpdateClimaDto,
-} from './dto/clima.dto';
+import { ClimaQueryDto, CreateClimaDto, UpdateClimaDto } from './dto/clima.dto';
+import { AccessScopeService, AuthenticatedUser } from '../auth/access-scope.service';
 
 @Injectable()
 export class ClimaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly accessScope: AccessScopeService,
+  ) {}
 
-  async findByRegiao(regiaoId: string, query: ClimaQueryDto = {}, user?: { id: string; perfil: string }) {
-    if (user) await this.assertRegiaoAccess(regiaoId, user);
+  async findByRegiao(
+    regiaoId: string,
+    query: ClimaQueryDto = {},
+    user?: AuthenticatedUser,
+  ) {
+    if (user) await this.accessScope.assertRegionAccess(regiaoId, user);
     const data = {
       ...(query.de || query.ate
         ? {
@@ -27,23 +31,27 @@ export class ClimaService {
     });
   }
 
-  async findClimatologia(regiaoId: string, user: { id: string; perfil: string }) {
-    await this.assertRegiaoAccess(regiaoId, user);
+  async findClimatologia(
+    regiaoId: string,
+    user: AuthenticatedUser,
+  ) {
+    await this.accessScope.assertRegionAccess(regiaoId, user);
     return this.prisma.climaRegiao.findFirst({
       where: { regiaoId },
       orderBy: { importadoEm: 'desc' },
     });
   }
 
-  async create(dto: CreateClimaDto) {
-    await this.ensureRegiao(dto.regiaoId);
+  async create(dto: CreateClimaDto, user: AuthenticatedUser) {
+    await this.accessScope.assertRegionAccess(dto.regiaoId, user);
     return this.prisma.condicaoClimatica.create({
       data: { ...dto, data: new Date(dto.data) },
     });
   }
 
-  async update(id: string, dto: UpdateClimaDto) {
-    await this.ensureExists(id);
+  async update(id: string, dto: UpdateClimaDto, user: AuthenticatedUser) {
+    await this.accessScope.assertClimateAccess(id, user);
+    if (dto.regiaoId) await this.accessScope.assertRegionAccess(dto.regiaoId, user);
     const data = {
       ...dto,
       ...(dto.data ? { data: new Date(dto.data) } : {}),
@@ -55,14 +63,6 @@ export class ClimaService {
     await this.ensureExists(id);
     await this.prisma.condicaoClimatica.delete({ where: { id } });
     return { id, deleted: true };
-  }
-
-  private async assertRegiaoAccess(regiaoId: string, user: { id: string; perfil: string }) {
-    const regiao = await this.prisma.regiaoProdutora.findUnique({ where: { id: regiaoId }, select: { id: true, usuarios: { where: { id: user.id }, select: { id: true } } } });
-    if (!regiao) throw new NotFoundException('Município não encontrado');
-    if (user.perfil === 'PRODUTOR' && !regiao.usuarios.length) {
-      throw new ForbiddenException('Município não vinculado ao usuário');
-    }
   }
 
   private async ensureExists(id: string) {

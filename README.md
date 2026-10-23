@@ -1,4 +1,4 @@
-# Café PI — Grupo 07
+# Plataforma agrícola — Grupo 07
 
 Plataforma multiplataforma de análise de dados agrícolas e climáticos por
 município e cultura, desenvolvida pelo Grupo 07 no Projeto Interdisciplinar do 6º semestre
@@ -11,7 +11,7 @@ Nogueira
 
 ## 1. Objetivo do produto
 
-O Café PI organiza dados climáticos e de produção por município e cultura
+A plataforma organiza dados climáticos e de produção por município e cultura
 para apoiar a exploração de resultados analíticos. A solução possui:
 
 - API REST NestJS para autenticação, municípios, clima, produção, culturas, compatibilidade e métricas;

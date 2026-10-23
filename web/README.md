@@ -1,4 +1,4 @@
-# Café PI - Web
+# Plataforma agrícola - Web
 
 Front-end web em Next.js App Router, integrado à API NestJS. A mesma API e os
 mesmos contratos tipados da camada `src/lib/api.ts` devem ser reutilizados pelo
@@ -12,9 +12,16 @@ Crie `web/.env.local` a partir de `.env.example`:
 NEXT_PUBLIC_API_URL="http://localhost:3001"
 ```
 
+O front usa essa variável tanto no navegador quanto durante o build. Quando a
+API estiver em outro host, informe a URL pública completa, sem depender de
+`localhost`.
+
 O valor deve apontar para uma API acessível pelo navegador. No futuro mobile,
 use a URL acessível pelo dispositivo ou emulador, não `localhost` do computador
 quando essa URL não estiver disponível no dispositivo.
+
+Regra da Home page: todo estilo de `src/app/page.tsx` deve ser escrito com
+classes Tailwind; não criar ou reintroduzir CSS modular em `page.module.css`.
 
 ## Execução
 
@@ -31,7 +38,7 @@ O fluxo atual inclui:
 - sessão JWT armazenada no navegador para o protótipo;
 - proteção do dashboard sem sessão;
 - regiões reais de `GET /regioes`;
-- clima de `GET /clima/:regiaoId`;
+- climatologia de `GET /clima/municipios/:regiaoId` e histórico de `GET /clima/:regiaoId`;
 - safras de `GET /safra/:regiaoId`;
 - perfil preliminar de `GET /clusters`;
 - logout e tratamento de carregamento, vazio e erro.

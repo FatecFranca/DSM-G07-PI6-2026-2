@@ -1,4 +1,4 @@
-# `analytics/` — Módulo Analítico (ML) do Café PI
+# `analytics/` — Módulo Analítico (ML) da plataforma agrícola
 
 Mineração de dados do projeto (RF01/RF02 de `docs/documentacao-sprint1.md`):
 coleta e tratamento, K-Means e classificação supervisionada que indica **quais

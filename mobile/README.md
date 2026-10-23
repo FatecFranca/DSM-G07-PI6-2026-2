@@ -1,4 +1,4 @@
-# Café PI - Mobile
+# Plataforma agrícola - Mobile
 
 Aplicativo React Native com Expo para consumir a mesma API NestJS usada pelo
 Web. O primeiro fluxo implementado é login, sessão segura, logout e consulta

@@ -13,7 +13,7 @@ const display = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Café PI — Dados agrícolas municipais",
+  title: "Dados agrícolas municipais",
   description:
     "Plataforma de dados climáticos e agrícolas por município e cultura — Grupo 07 DSM",
 };

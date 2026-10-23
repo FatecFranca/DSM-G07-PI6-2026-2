@@ -87,7 +87,7 @@ function LoginScreen({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.eyebrow}>CAFÉ PI</Text>
+        <Text style={styles.eyebrow}>PLATAFORMA AGRÍCOLA</Text>
         <Text style={styles.title}>Inteligência para sua produção</Text>
         <Text style={styles.subtitle}>Acesse dados de clima, produção e análise por município.</Text>
         <TextInput
@@ -162,7 +162,7 @@ function RegisterScreen({
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.eyebrow}>CAFÉ PI</Text>
+        <Text style={styles.eyebrow}>PLATAFORMA AGRÍCOLA</Text>
         <Text style={styles.title}>Criar conta</Text>
         <Text style={styles.subtitle}>
           Cadastre-se para consultar clima, produção e análise por município.

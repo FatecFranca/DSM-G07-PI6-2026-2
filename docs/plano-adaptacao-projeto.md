@@ -2,7 +2,7 @@
 
 ## Objetivo e escopo
 
-Adaptar gradualmente o **Café PI** à proposta do documento de referência: análise em nível municipal, múltiplas culturas e resultados analíticos persistidos para consulta. A execução será dividida em duas entregas: **(1) refatoração e fundação do back-end; (2) adaptação dos clientes Web e Mobile após a estabilização da API**. Este arquivo mantém a sequência e os critérios do plano; o estado de implementação está registrado ao final.
+Adaptar gradualmente a **plataforma agrícola** à proposta do documento de referência: análise em nível municipal, múltiplas culturas e resultados analíticos persistidos para consulta. A execução será dividida em duas entregas: **(1) refatoração e fundação do back-end; (2) adaptação dos clientes Web e Mobile após a estabilização da API**. Este arquivo mantém a sequência e os critérios do plano; o estado de implementação está registrado ao final.
 
 O arquivo plano-adaptacao-projeto.docx é uma proposta de escopo com recomendações e tarefas. Seu conteúdo não é autorização para executar todas as mudanças nem prova de decisões já aprovadas. Este plano converte as propostas em etapas e destaca as decisões que a equipe precisa confirmar.
 
@@ -112,7 +112,7 @@ O front-end passa a consumir o novo contrato quando as fases 2–6 forem aceitas
 4. Mostrar climatologia e histórico por cultura com unidade/período; mostrar ranking com versão, proveniência, variáveis e aviso exploratório.
 5. Apresentar métricas e matriz de confusão por cultura, baseline e limitações quando a API fornecer.
 6. Tratar loading, vazio, falha, acesso negado e dados indisponíveis em cada tela; validar acessibilidade e responsividade.
-7. Atualizar landing page, título/descrição e textos de domínio. Remover controles diários/textos antigos quando não houver dependência do contrato anterior.
+7. Atualizar Home page, título/descrição e textos de domínio. Remover controles diários/textos antigos quando não houver dependência do contrato anterior.
 8. Tratar comparação e mapa como opcionais posteriores; selecionar biblioteca e coordenadas apenas se priorizados.
 
 **Aceite Web:** fluxos essenciais usam dados demonstrativos reais, sem apresentar mocks como resultados; filtros/paginação seguem o contrato; estados vazios e erros são claros; lint e build passam.

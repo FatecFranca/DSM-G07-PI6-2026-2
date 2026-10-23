@@ -20,11 +20,7 @@ import { SafraService } from './safra.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import {
-  CreateSafraDto,
-  SafraQueryDto,
-  UpdateSafraDto,
-} from './dto/safra.dto';
+import { CreateSafraDto, SafraQueryDto, UpdateSafraDto } from './dto/safra.dto';
 
 @ApiTags('safra')
 @ApiBearerAuth()
@@ -48,14 +44,21 @@ export class SafraController {
 
   @Post()
   @Roles('ADMIN', 'TECNICO')
-  create(@Body() dto: CreateSafraDto) {
-    return this.safraService.create(dto);
+  create(
+    @Body() dto: CreateSafraDto,
+    @Req() req: { user: { id: string; perfil: string } },
+  ) {
+    return this.safraService.create(dto, req.user);
   }
 
   @Patch(':id')
   @Roles('ADMIN', 'TECNICO')
-  update(@Param('id') id: string, @Body() dto: UpdateSafraDto) {
-    return this.safraService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateSafraDto,
+    @Req() req: { user: { id: string; perfil: string } },
+  ) {
+    return this.safraService.update(id, dto, req.user);
   }
 
   @Delete(':id')
