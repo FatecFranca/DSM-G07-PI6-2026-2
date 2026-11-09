@@ -9,6 +9,7 @@ import { SafraModule } from './safra/safra.module';
 import { CulturasModule } from './culturas/culturas.module';
 import { CompatibilidadesModule } from './compatibilidades/compatibilidades.module';
 import { ModelosModule } from './modelos/modelos.module';
+import { PredicoesModule } from './predicoes/predicoes.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ModelosModule } from './modelos/modelos.module';
     CulturasModule,
     CompatibilidadesModule,
     ModelosModule,
+    PredicoesModule,
   ],
 })
 export class AppModule {}

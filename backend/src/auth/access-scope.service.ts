@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -26,7 +30,8 @@ export class AccessScopeService {
       where: { id: regiaoId, ...this.regionWhere(user) },
       select: { id: true },
     });
-    if (!linked) throw new ForbiddenException('Município não vinculado ao usuário');
+    if (!linked)
+      throw new ForbiddenException('Município não vinculado ao usuário');
   }
 
   async assertClimateAccess(climaId: string, user: AuthenticatedUser) {
@@ -34,7 +39,8 @@ export class AccessScopeService {
       where: { id: climaId },
       select: { regiaoId: true },
     });
-    if (!climate) throw new NotFoundException('Condição climática não encontrada');
+    if (!climate)
+      throw new NotFoundException('Condição climática não encontrada');
     await this.assertRegionAccess(climate.regiaoId, user);
   }
 

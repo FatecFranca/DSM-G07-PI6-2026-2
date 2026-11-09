@@ -16,6 +16,10 @@ export interface UploadedDataFile {
   sha256: string;
   contentLength: number;
 }
+export interface DownloadedDataFile {
+  sha256: string;
+  contentLength: number;
+}
 
 @Injectable()
 export class AzureBlobStorageService {
@@ -48,7 +52,7 @@ export class AzureBlobStorageService {
   async downloadToFile(
     blobName: string,
     destinationPath: string,
-  ): Promise<void> {
+  ): Promise<DownloadedDataFile> {
     const response = await this.blockBlob(blobName).download();
     if (!response.readableStreamBody) {
       throw new Error(`Blob sem conteúdo legível: ${blobName}`);
@@ -60,6 +64,10 @@ export class AzureBlobStorageService {
     }
     const content = Buffer.concat(chunks);
     await writeFile(destinationPath, content);
+    return {
+      sha256: createHash('sha256').update(content).digest('hex'),
+      contentLength: content.length,
+    };
   }
 
   private blockBlob(blobName: string): BlockBlobClient {

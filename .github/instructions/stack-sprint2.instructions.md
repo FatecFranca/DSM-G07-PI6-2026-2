@@ -36,4 +36,4 @@ applyTo: "backend/**/*,web/**/*,analytics/**/*"
 - Não implementar `GET /predicoes/:regiaoId`; esse endpoint pertence à Sprint 3.
 - Não trocar NestJS, Next.js, Prisma ou PostgreSQL sem acordo do grupo.
 - Não considerar uma funcionalidade concluída sem teste ou evidência registrada.
-- Atualizar `docs/documentacao-sprint2.md` na mesma entrega de qualquer alteração.
+- Atualizar `docs/documentacao.md` na mesma entrega de qualquer alteração.

@@ -36,10 +36,10 @@ interpretado como medição individual de uma propriedade.
 | Ambiente em nuvem | Pendente de configuração final | Print do provedor, banco, API publicada e configuração inicial |
 | Coleta e tratamento | Scripts NASA POWER e CONAB/agrobr criados | Print da execução, CSV tratado, contagens e validações |
 | Técnica inicial de mineração | Cluster climático preliminar implementado | Print do resultado, variáveis, `k=2` e métrica do pipeline |
-| Documentação intermediária | Mantida em atualização | Prints, links e trechos inseridos em `docs/documentacao-sprint2.md` |
+| Documentação geral | Mantida em atualização | Documento único em `docs/documentacao.md` |
 
 O checklist detalhado e o registro oficial de pendências estão em
-[docs/documentacao-sprint2.md](./docs/documentacao-sprint2.md).
+[docs/documentacao.md](./docs/documentacao.md).
 
 ## 3. Stack
 
@@ -74,7 +74,7 @@ O checklist detalhado e o registro oficial de pendências estão em
 │   └── docs/                 # explicações e limitações analíticas
 ├── docs/
 │   ├── documentacao-sprint1.md
-│   └── documentacao-sprint2.md
+│   └── documentacao.md
 ├── docker-compose.yml
 └── README.md
 ```
@@ -442,7 +442,7 @@ Também executar `git diff --check` antes do commit.
 ## 12. Documentação complementar
 
 - [Documentação da Sprint 1](./docs/documentacao-sprint1.md)
-- [Documentação geral da Sprint 2](./docs/documentacao-sprint2.md)
+- [Documentação geral do projeto](./docs/documentacao.md)
 - [README do back-end](./backend/README.md)
 - [README do Web](./web/README.md)
 - [README do Mobile](./mobile/README.md)

@@ -11,10 +11,12 @@ function required(value: string | undefined, name: string): string {
   return value;
 }
 
-function parseRelated(value: string | undefined): {
-  type: DataFileType;
-  path: string;
-} | undefined {
+function parseRelated(value: string | undefined):
+  | {
+      type: DataFileType;
+      path: string;
+    }
+  | undefined {
   if (!value) return undefined;
   const separator = value.indexOf(':');
   if (separator <= 0) {
@@ -28,12 +30,20 @@ function parseRelated(value: string | undefined): {
 
 async function main(): Promise<void> {
   const [, , filePath, dataFileType, blobNameArg, relatedArg] = process.argv;
-  const type = required(dataFileType, 'o tipo do arquivo (clima, safra ou regiao-uf)') as DataFileType;
+  const type = required(
+    dataFileType,
+    'o tipo do arquivo (clima, safra ou regiao-uf)',
+  ) as DataFileType;
   const config = new CloudConfig();
   const storage = new AzureBlobStorageService(config);
   const bus = new AzureServiceBusService(config);
-  const blobName = blobNameArg ?? `${type}/${Date.now()}-${basename(required(filePath, 'o caminho do arquivo'))}`;
-  const uploaded = await storage.uploadFile(required(filePath, 'o caminho do arquivo'), blobName);
+  const blobName =
+    blobNameArg ??
+    `${type}/${Date.now()}-${basename(required(filePath, 'o caminho do arquivo'))}`;
+  const uploaded = await storage.uploadFile(
+    required(filePath, 'o caminho do arquivo'),
+    blobName,
+  );
   const related = parseRelated(relatedArg);
   const relatedUploaded = related
     ? await storage.uploadFile(

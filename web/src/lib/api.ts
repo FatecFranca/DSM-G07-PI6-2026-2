@@ -8,6 +8,8 @@ export interface SafraRendimento { id: string; regiaoId: string; culturaId: stri
 export interface Compatibilidade { id: string; regiaoId: string; culturaId: string; compatibilidade: number; ranking: number | null; versaoModelo: string; aviso: string | null; cultura: Cultura; }
 export interface ClusterAssignment { id: string; regiaoId: string; grupo: number; nomeGrupo: string | null; versaoModelo: string; perfil: { nomeGrupo: string | null; quantidadeMunicipios: number; variaveis: Record<string, number>; } | null; }
 export interface MetricaModelo { id: string; algoritmo: string; acuracia: number | null; acuraciaBalanceada: number | null; precisao: number | null; recall: number | null; f1: number | null; auc: number | null; baseline: number | null; matrizConfusao: unknown; versaoModelo: string; cultura: Cultura; executadoEm: string; }
+export interface Predicao { id: string; cultura: Cultura; ano: number; valor: number; unidade: string; algoritmo: string; versaoModelo: string; versaoDados: string | null; features: Record<string, unknown> | null; metricas: Record<string, unknown> | null; aviso: string; executadoEm: string; }
+export interface PredicoesResponse { municipio: Regiao; previsoes: Predicao[]; }
 export class ApiError extends Error { constructor(message: string, readonly status: number) { super(message); this.name = 'ApiError'; } }
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace(/\/$/, '');
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
@@ -34,4 +36,5 @@ export const api = {
  ranking(token: string, filters: { cultura?: string; uf?: string; min?: number; page?: number; limit?: number } = {}) { const q = new URLSearchParams(); Object.entries(filters).forEach(([k,v]) => { if (v !== undefined && v !== '') q.set(k, String(v)); }); return request<Page<Compatibilidade> & { aviso: string }>('/compatibilidades?' + q.toString(), {}, token); },
  clusters(regiaoId: string, token: string) { return request<ClusterAssignment[]>('/clusters/' + regiaoId, {}, token); },
  metricas(token: string, cultura?: string) { const q = cultura ? '?cultura=' + encodeURIComponent(cultura) : ''; return request<MetricaModelo[]>('/modelos/metricas' + q, {}, token); },
+ predicoes(regiaoId: string, token: string, filters: { cultura?: string; versao?: string; ano?: number } = {}) { const q = new URLSearchParams(); Object.entries(filters).forEach(([k, v]) => { if (v !== undefined && v !== '') q.set(k, String(v)); }); const suffix = q.toString() ? '?' + q.toString() : ''; return request<PredicoesResponse>('/predicoes/' + regiaoId + suffix, {}, token); },
 };

@@ -38,7 +38,6 @@ async function main() {
     await prisma.cultura.upsert({ where: { slug }, update: { nome }, create: { nome, slug } });
   }
 
-  const cafe = await prisma.cultura.findUniqueOrThrow({ where: { slug: 'cafe' } });
   const culturasSeed = await prisma.cultura.findMany({
     where: { slug: { in: culturas.map(([, slug]) => slug) } },
   });
@@ -85,20 +84,66 @@ async function main() {
     }
   }
 
+  const culturasHistorico = ['cafe', 'soja', 'milho', 'cana-de-acucar'];
   for (const [index, regiao] of regioes.entries()) {
-    await prisma.safraRendimento.upsert({
-      where: { regiaoId_culturaId_anoColheita: { regiaoId: regiao.id, culturaId: cafe.id, anoColheita: 2025 } },
-      update: { culturaId: cafe.id, areaColhidaHa: 100 + index * 20, producaoT: 150 + index * 30, diasCrescimento: 240 + index * 5, rendimentoToneladasHectare: 1.5 + index * 0.2 },
-      create: {
-        regiaoId: regiao.id,
-        culturaId: cafe.id,
-        areaColhidaHa: 100 + index * 20,
-        producaoT: 150 + index * 30,
-        anoColheita: 2025,
-        diasCrescimento: 240 + index * 5,
-        rendimentoToneladasHectare: 1.5 + index * 0.2,
-      },
-    });
+    for (const [culturaIndex, slug] of culturasHistorico.entries()) {
+      for (const ano of [2022, 2023, 2024, 2025]) {
+        const rendimento = 1.15 + index * 0.18 + culturaIndex * 0.22 + (ano - 2022) * 0.08;
+        const area = 80 + index * 20 + culturaIndex * 35;
+        await prisma.safraRendimento.upsert({
+          where: { regiaoId_culturaId_anoColheita: { regiaoId: regiao.id, culturaId: cultura(slug).id, anoColheita: ano } },
+          update: {
+            areaColhidaHa: area,
+            producaoT: area * rendimento,
+            diasCrescimento: 210 + culturaIndex * 18 + index * 5,
+            rendimentoToneladasHectare: rendimento,
+          },
+          create: {
+            regiaoId: regiao.id,
+            culturaId: cultura(slug).id,
+            areaColhidaHa: area,
+            producaoT: area * rendimento,
+            anoColheita: ano,
+            diasCrescimento: 210 + culturaIndex * 18 + index * 5,
+            rendimentoToneladasHectare: rendimento,
+          },
+        });
+      }
+    }
+  }
+
+  const climaBase = [
+    { temperatura: 21.5, chuva: 130, umidade: 70, radiacao: 5.2 },
+    { temperatura: 24.2, chuva: 90, umidade: 62, radiacao: 6.1 },
+    { temperatura: 19.8, chuva: 180, umidade: 78, radiacao: 4.6 },
+  ] as const;
+  for (const [index, regiao] of regioes.entries()) {
+    for (const ano of [2022, 2023, 2024, 2025]) {
+      for (let mes = 1; mes <= 12; mes += 1) {
+        const sazonalidade = Math.sin(((mes - 1) / 12) * Math.PI * 2);
+        const base = climaBase[index];
+        const data = new Date(Date.UTC(ano, mes - 1, 15));
+        await prisma.condicaoClimatica.upsert({
+          where: { id: `${regiao.id}-${ano}-${mes}` },
+          update: {
+            data,
+            temperaturaMedia: base.temperatura + sazonalidade * 3,
+            precipitacao: Math.max(20, base.chuva + sazonalidade * 45),
+            umidade: base.umidade + sazonalidade * 4,
+            radiacaoSolar: base.radiacao - sazonalidade * 0.45,
+          },
+          create: {
+            id: `${regiao.id}-${ano}-${mes}`,
+            regiaoId: regiao.id,
+            data,
+            temperaturaMedia: base.temperatura + sazonalidade * 3,
+            precipitacao: Math.max(20, base.chuva + sazonalidade * 45),
+            umidade: base.umidade + sazonalidade * 4,
+            radiacaoSolar: base.radiacao - sazonalidade * 0.45,
+          },
+        });
+      }
+    }
   }
 
   const versaoDados = 'seed-2026';
@@ -166,6 +211,49 @@ async function main() {
     const data = { culturaId: culturaItem.id, algoritmo: metrica.algoritmo, versaoModelo, acuracia: metrica.acuracia, acuraciaBalanceada: metrica.acuraciaBalanceada, precisao: metrica.precisao, recall: metrica.recall, f1: metrica.f1, auc: metrica.auc, baseline: metrica.baseline, matrizConfusao: metrica.matrizConfusao };
     if (existing) await prisma.metricaModelo.update({ where: { id: existing.id }, data });
     else await prisma.metricaModelo.create({ data });
+  }
+
+  const previsaoBase = [
+    [1.82, 2.26, 2.74, 3.18],
+    [2.05, 2.52, 2.91, 3.44],
+    [1.96, 2.38, 2.82, 3.26],
+  ] as const;
+  for (const [regiaoIndex, regiao] of regioes.entries()) {
+    for (const [culturaIndex, slug] of culturasHistorico.entries()) {
+      const item = cultura(slug);
+      await prisma.previsaoProdutividade.upsert({
+        where: {
+          regiaoId_culturaId_anoPrevisto_versaoModelo: {
+            regiaoId: regiao.id,
+            culturaId: item.id,
+            anoPrevisto: 2026,
+            versaoModelo,
+          },
+        },
+        update: {
+          valor: previsaoBase[regiaoIndex][culturaIndex],
+          unidade: 't/ha',
+          algoritmo: culturaIndex % 2 === 0 ? 'Random Forest' : 'Gradient Boosting',
+          versaoDados,
+          features: { temperaturaMedia: climaBase[regiaoIndex].temperatura, chuvaAnual: climatologias[regiaoIndex].chuvaAnual },
+          metricas: { erroMedio: 0.18 + culturaIndex * 0.03, cobertura: 'seed demonstrativo' },
+          aviso: 'Previsão demonstrativa para validação da interface; não é recomendação agronômica.',
+        },
+        create: {
+          regiaoId: regiao.id,
+          culturaId: item.id,
+          anoPrevisto: 2026,
+          valor: previsaoBase[regiaoIndex][culturaIndex],
+          unidade: 't/ha',
+          algoritmo: culturaIndex % 2 === 0 ? 'Random Forest' : 'Gradient Boosting',
+          versaoModelo,
+          versaoDados,
+          features: { temperaturaMedia: climaBase[regiaoIndex].temperatura, chuvaAnual: climatologias[regiaoIndex].chuvaAnual },
+          metricas: { erroMedio: 0.18 + culturaIndex * 0.03, cobertura: 'seed demonstrativo' },
+          aviso: 'Previsão demonstrativa para validação da interface; não é recomendação agronômica.',
+        },
+      });
+    }
   }
 }
 

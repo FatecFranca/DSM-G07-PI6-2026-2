@@ -7,11 +7,7 @@ async function main(): Promise<void> {
   const prisma = new PrismaService();
   const importer = new DataImportService(prisma);
   try {
-    await importer.importTreatedFiles(
-      climatePath,
-      harvestPath,
-      regionUfPath,
-    );
+    await importer.importTreatedFiles(climatePath, harvestPath, regionUfPath);
     console.log('Arquivos tratados importados com sucesso.');
   } finally {
     await prisma.$disconnect();

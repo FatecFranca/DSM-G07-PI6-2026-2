@@ -1,8 +1,16 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { AccessScopeService } from './access-scope.service';
 
 describe('AccessScopeService', () => {
-  const prisma = {
+  const prisma: {
+    regiaoProdutora: {
+      findUnique: jest.Mock;
+      findFirst: jest.Mock;
+    };
+    condicaoClimatica: { findUnique: jest.Mock };
+    safraRendimento: { findUnique: jest.Mock };
+  } = {
     regiaoProdutora: {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
@@ -13,13 +21,13 @@ describe('AccessScopeService', () => {
     safraRendimento: {
       findUnique: jest.fn(),
     },
-  } as any;
+  };
 
   let service: AccessScopeService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AccessScopeService(prisma);
+    service = new AccessScopeService(prisma as unknown as PrismaService);
   });
 
   it('deixa ADMIN sem filtro de região', () => {

@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClimaQueryDto, CreateClimaDto, UpdateClimaDto } from './dto/clima.dto';
-import { AccessScopeService, AuthenticatedUser } from '../auth/access-scope.service';
+import {
+  AccessScopeService,
+  AuthenticatedUser,
+} from '../auth/access-scope.service';
 
 @Injectable()
 export class ClimaService {
@@ -31,10 +34,7 @@ export class ClimaService {
     });
   }
 
-  async findClimatologia(
-    regiaoId: string,
-    user: AuthenticatedUser,
-  ) {
+  async findClimatologia(regiaoId: string, user: AuthenticatedUser) {
     await this.accessScope.assertRegionAccess(regiaoId, user);
     return this.prisma.climaRegiao.findFirst({
       where: { regiaoId },
@@ -51,7 +51,8 @@ export class ClimaService {
 
   async update(id: string, dto: UpdateClimaDto, user: AuthenticatedUser) {
     await this.accessScope.assertClimateAccess(id, user);
-    if (dto.regiaoId) await this.accessScope.assertRegionAccess(dto.regiaoId, user);
+    if (dto.regiaoId)
+      await this.accessScope.assertRegionAccess(dto.regiaoId, user);
     const data = {
       ...dto,
       ...(dto.data ? { data: new Date(dto.data) } : {}),

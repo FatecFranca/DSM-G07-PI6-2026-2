@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import { AccessScopeService, AuthenticatedUser } from '../auth/access-scope.service';
+import {
+  AccessScopeService,
+  AuthenticatedUser,
+} from '../auth/access-scope.service';
 import {
   CreateRegiaoDto,
   RegiaoQueryDto,

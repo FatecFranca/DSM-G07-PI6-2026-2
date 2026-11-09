@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSafraDto, SafraQueryDto, UpdateSafraDto } from './dto/safra.dto';
-import { AccessScopeService, AuthenticatedUser } from '../auth/access-scope.service';
+import {
+  AccessScopeService,
+  AuthenticatedUser,
+} from '../auth/access-scope.service';
 @Injectable()
 export class SafraService {
   constructor(
@@ -34,7 +37,8 @@ export class SafraService {
   }
   async update(id: string, dto: UpdateSafraDto, user: AuthenticatedUser) {
     await this.accessScope.assertHarvestAccess(id, user);
-    if (dto.regiaoId) await this.accessScope.assertRegionAccess(dto.regiaoId, user);
+    if (dto.regiaoId)
+      await this.accessScope.assertRegionAccess(dto.regiaoId, user);
     return this.prisma.safraRendimento.update({ where: { id }, data: dto });
   }
   async remove(id: string) {

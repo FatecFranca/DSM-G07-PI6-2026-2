@@ -51,6 +51,10 @@ npm run data:import:agricultural -- ..\analytics\data\processed\artefato_agricol
 | `04_classificacao.ipynb` | Classificação supervisionada, matrizes de confusão e compatibilidade exploratória | Não |
 
 Os notebooks 02 a 04 leem só de `data/processed/` (saída do 00). O notebook 01 exporta os resultados integrados depois que 00, 02, 03 e 04 gerarem seus arquivos.
+Quando `previsoes_teste.csv` contém código IBGE municipal explícito, o notebook
+01 também exporta `predictions` com produtividade prevista em t/ha. A regressão
+atual é agregada por UF e, sem código municipal, nenhuma previsão é replicada
+artificialmente para os municípios.
 
 ## Dois algoritmos, de natureza diferente
 

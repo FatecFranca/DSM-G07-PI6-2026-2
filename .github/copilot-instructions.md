@@ -2,7 +2,7 @@
 
 Sempre que qualquer arquivo, funcionalidade, configuração, endpoint, entidade,
 script, tela, dependência ou processo do projeto for alterado, atualize também
-[`docs/documentacao-sprint2.md`](../docs/documentacao-sprint2.md) na mesma
+[`docs/documentacao.md`](../docs/documentacao.md) na mesma
 entrega.
 
 - Atualize a seção correspondente ao comportamento atual.

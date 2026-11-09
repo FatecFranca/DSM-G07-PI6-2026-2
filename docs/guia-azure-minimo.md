@@ -107,7 +107,7 @@ Abre uma página no navegador; clique em uma tabela com dados.
 
 ## 7. Preencher a documentação
 
-Em `docs/documentacao-sprint2.md`, seção 5.1. Como a API não foi publicada, não declarar URL pública:
+Em `docs/documentacao.md`, seção 8.2. Como a API não foi publicada, não declarar URL pública:
 
 | Item | Escrever |
 | --- | --- |

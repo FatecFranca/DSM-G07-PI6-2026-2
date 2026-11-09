@@ -10,6 +10,7 @@
   --cream-muted: #d9cdb8;
   --accent: #c4a35a;
   --ink: #0f1a0f;
+  --focus: #f0c96a;
 }
 
 * {
@@ -36,4 +37,22 @@ button,
   font: inherit;
   cursor: pointer;
   border: none;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

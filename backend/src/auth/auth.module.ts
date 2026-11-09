@@ -22,7 +22,13 @@ import { AccessScopeService } from './access-scope.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard, AccessScopeService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    RolesGuard,
+    AccessScopeService,
+  ],
   exports: [AuthService, JwtAuthGuard, RolesGuard, AccessScopeService],
 })
 export class AuthModule {}

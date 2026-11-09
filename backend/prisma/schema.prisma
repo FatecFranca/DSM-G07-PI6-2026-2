@@ -33,6 +33,7 @@ model RegiaoProdutora {
   safras SafraRendimento[]
   clusters ClusterRegiao[]
   compatibilidades CompatibilidadeCultura[]
+  predicoes PrevisaoProdutividade[]
   usuarios Usuario[] @relation("UsuarioRegioes")
   @@index([uf])
   @@map("Regiao_Produtora")
@@ -56,6 +57,7 @@ model Cultura {
   safras SafraRendimento[]
   compatibilidades CompatibilidadeCultura[]
   metricas MetricaModelo[]
+  predicoes PrevisaoProdutividade[]
   @@map("Cultura")
 }
 model SafraRendimento {
@@ -151,4 +153,37 @@ model MetricaModelo {
   cultura Cultura @relation(fields: [culturaId], references: [id], onDelete: Cascade)
   @@index([culturaId, versaoModelo])
   @@map("Metrica_Modelo")
+}
+model DataFileEvent {
+  id String @id @default(cuid())
+  eventId String @unique
+  correlationId String
+  sha256 String
+  status String
+  receivedAt DateTime @default(now())
+  processedAt DateTime?
+  errorMessage String?
+  @@index([status, receivedAt])
+  @@map("Data_File_Event")
+}
+model PrevisaoProdutividade {
+  id String @id @default(cuid())
+  regiaoId String
+  culturaId String
+  anoPrevisto Int
+  valor Float
+  unidade String @default("t/ha")
+  algoritmo String
+  versaoModelo String
+  versaoDados String?
+  features Json?
+  metricas Json?
+  aviso String?
+  executadoEm DateTime @default(now())
+  regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
+  cultura Cultura @relation(fields: [culturaId], references: [id], onDelete: Restrict)
+  @@unique([regiaoId, culturaId, anoPrevisto, versaoModelo])
+  @@index([regiaoId, culturaId, anoPrevisto])
+  @@index([versaoModelo])
+  @@map("Previsao_Produtividade")
 }

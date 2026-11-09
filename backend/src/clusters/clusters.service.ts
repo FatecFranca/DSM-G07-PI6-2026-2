@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AccessScopeService, AuthenticatedUser } from '../auth/access-scope.service';
+import {
+  AccessScopeService,
+  AuthenticatedUser,
+} from '../auth/access-scope.service';
 @Injectable()
 export class ClustersService {
   constructor(
@@ -51,9 +54,7 @@ export class ClustersService {
     const municipio = await this.prisma.regiaoProdutora.findFirst({
       where: {
         id,
-        ...(user.perfil !== 'ADMIN'
-          ? this.accessScope.regionWhere(user)
-          : {}),
+        ...(user.perfil !== 'ADMIN' ? this.accessScope.regionWhere(user) : {}),
       },
       select: { id: true },
     });

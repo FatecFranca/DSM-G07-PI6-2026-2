@@ -13,7 +13,10 @@
 | 1ª Sprint | 04/09/2026 | Escopo, requisitos, modelagem, arquitetura, estrutura inicial e planejamento |
 | 2ª Sprint | 09/10/2026 | Versão intermediária com integrações parciais |
 
-Este documento reúne em um só lugar o que antes estava em `documentacao-sprint1.md` e `documentacao-sprint2.md`. Ele descreve o que foi **planejado** na Sprint 1, o que foi **implementado** na Sprint 2 e o que **mudou no caminho** (principalmente na parte de dados e de mineração). Onde algo não foi concluído, isso está dito.
+Este é o documento único de documentação do projeto. Ele reúne o planejamento
+da Sprint 1, a implementação da Sprint 2 e a transição para a Sprint 3,
+incluindo o estado atual do back-end, analytics, Web, Mobile, banco de dados,
+nuvem, mensageria e limitações conhecidas.
 
 ---
 
@@ -33,7 +36,7 @@ Durante a Sprint 2, a parte de dados e de mineração foi refeita, porque as bas
 | Clima | Série diária por região | **Climatologia** (média de longo prazo) por município |
 | Técnica supervisionada | Regressão (estimar produtividade em t/ha) | **Classificação** ("o município é apto para a cultura?") |
 | Técnica não supervisionada | K-Means | K-Means (mantido) |
-| Saída para o usuário | Cluster e predição de produtividade | Cluster e **compatibilidade por cultura**, com ranking e métricas |
+| Saída para o usuário | Cluster e predição de produtividade | Cluster, **compatibilidade por cultura** e previsão de produtividade versionada |
 
 A passagem completa dos requisitos, do banco e das telas para o novo formato está em `plano-adaptacao-projeto.md`. As partes **já implementadas** (analytics, back-end, web, mobile e banco de testes) seguem o formato anterior em alguns pontos, e isso está indicado em cada seção.
 
@@ -99,7 +102,7 @@ A coluna **Situação** indica o estado atual. A descrição já está na versã
 | RF03.2 | `GET /clima/:regiaoId`, retornando o clima da região | Feito (série diária; a adaptar para a climatologia) |
 | RF03.3 | `GET /safra/:regiaoId`, retornando o histórico de rendimento | Feito (a adaptar para cultura, área e produção) |
 | RF03.4 | `GET /clusters`, retornando o agrupamento | Parcial: o K-Means é calculado na própria API de forma provisória |
-| RF03.5 | Compatibilidade de culturas por município (`GET /compatibilidades/:regiaoId`). *Originalmente: `GET /predicoes/:regiaoId` (estimativa de produtividade).* | Pendente |
+| RF03.5 | Compatibilidade de culturas por município (`GET /compatibilidades/:regiaoId`) e previsão offline de produtividade (`GET /predicoes/:regiaoId`). | Compatibilidade implementada; previsão implementada com resultados importados e aviso de limitação |
 | RF03.6 | Documentar os endpoints via OpenAPI/Swagger | Feito |
 | RF03.7 | Exigir autenticação JWT, exceto login e cadastro | Feito |
 
@@ -167,7 +170,7 @@ O banco é relacional (**PostgreSQL**), modelado com o **Prisma ORM**.
 
 ### 5.2. Modelo conceitual planejado na Sprint 1
 
-A Sprint 1 previa também `Pais`, `Variedade_Cafe`, `Cluster_Climatico`, `Regiao_Cluster` e `Predicao_Produtividade`. Essas entidades **não foram implementadas** no schema atual. As de cluster e predição serão substituídas pelo modelo da seção 5.3, e `Pais` e `Variedade_Cafe` deixam de ser necessárias (o país é um campo de texto e as culturas passam a ser uma tabela própria).
+A Sprint 1 previa também `Pais`, `Variedade_Cafe`, `Cluster_Climatico`, `Regiao_Cluster` e `Predicao_Produtividade`. O modelo versionado `Previsao_Produtividade` agora cobre a previsão offline; `Pais` e `Variedade_Cafe` deixam de ser necessárias (o país é um campo de texto e as culturas passam a ser uma tabela própria).
 
 ### 5.3. Modelo-alvo (formato de municípios e culturas)
 
@@ -332,11 +335,38 @@ O projeto está em `mobile/`, com TypeScript, `EXPO_PUBLIC_API_URL`, login, cons
 
 ### 7.4. Banco de dados e dados de teste
 
-O schema é gerenciado pelo Prisma. A carga local é feita com `npx prisma migrate deploy` e `npm run prisma:seed`. O seed cria **dados de teste** (não reais): 3 regiões, 1 medição de clima por região, 1 safra por região e 1 usuário técnico de desenvolvimento. Os registros respeitam as relações do schema, e a carga pode ser repetida sem duplicar. O `backend/scripts/import-tratados.ts` importa arquivos tratados de forma idempotente.
+O schema é gerenciado pelo Prisma. A carga local é feita com `npx prisma migrate deploy` e `npm run prisma:seed`. O seed cria **dados de teste** (não reais): 3 regiões, quatro anos de safras para café, soja, milho e cana-de-açúcar, condições climáticas mensais de 2022 a 2025, climatologias, compatibilidades, métricas e previsões demonstrativas para 2026. Também cria 1 usuário técnico de desenvolvimento. Os registros respeitam as relações do schema, e a carga pode ser repetida sem duplicar. O `backend/scripts/import-tratados.ts` importa arquivos tratados de forma idempotente.
 
 ### 7.5. Repositório e boas práticas
 
 O desenvolvimento fica no repositório oficial do grupo no GitHub. Boas práticas adotadas: commits que descrevem a alteração, fluxo de branches definido pelo grupo, *pull requests* com objetivo e arquivos alterados, e nenhum token, senha ou `.env` versionado. O histórico do GitHub é a evidência da participação da equipe.
+
+### 7.6. Transição para a Sprint 3: predições e dashboard analítico
+
+O endpoint autenticado `GET /predicoes/:regiaoId?cultura=&versao=&ano=` consulta
+previsões offline de produtividade em toneladas por hectare. A rota respeita os
+vínculos municipais de `PRODUTOR` e `TECNICO`, enquanto `ADMIN` possui acesso
+irrestrito. A resposta informa município, cultura, ano, valor, unidade,
+algoritmo, versões do modelo e dos dados, features, métricas e aviso de
+limitação. A API não treina nem executa inferência durante a requisição.
+
+O exportador analítico só publica previsões quando o arquivo contém código IBGE
+municipal explícito. Resultados agregados por UF não são replicados para todos
+os municípios. A regressão atual apresentou desempenho temporal limitado, por
+isso o resultado continua exploratório e não constitui recomendação agronômica.
+
+O dashboard Web consulta os resultados publicados e exibe:
+
+- KPIs de temperatura média, chuva anual, compatibilidade e maior rendimento;
+- gráficos leves de sazonalidade climática, evolução da produção e previsões;
+- comparação de clima, cultura mais compatível e rendimento entre municípios;
+- estado de carregamento, vazio, erro, foco de teclado e aviso de proveniência;
+- versão dos dados, versão do modelo, período analisado e limitação estatística.
+
+O seed local cria dados demonstrativos reproduzíveis para quatro anos de safra
+(2022--2025), registros climáticos mensais, quatro culturas e previsões de 2026
+na versão `demo-2026-1`. Esses dados servem para validação da interface e não
+representam a coleta oficial.
 
 ## 8. Computação em nuvem
 
@@ -366,6 +396,25 @@ O desenvolvimento fica no repositório oficial do grupo no GitHub. Boas prática
 **Evidências a anexar** em `docs/evidencias/` existem os prints de `nuvem-recurso` (grupo de recursos, visão geral do servidor e regras de rede) e `nuvem-servico.png` (migrations e seed e dados no Prisma Studio).
 
 **Próximo passo:** publicar a API (por exemplo, no App Service), com `DATABASE_URL` e `JWT_SECRET` configurados e o comando `npm run start:prod`.
+
+### 8.3. Mensageria Azure
+
+O fluxo assíncrono usa Azure Blob Storage e Azure Service Bus. O script
+`backend/scripts/publish-data-file.ts` envia o arquivo tratado para o container
+privado `data-treated` e publica um evento `DataFileAvailable v1` na fila
+configurada.
+
+O consumidor usa `peekLock` e confirma a mensagem somente depois de validar o
+envelope, o container, `eventId`, `correlationId`, SHA-256, tamanho e tipo do
+arquivo, baixar o blob e concluir a importação. A tabela `Data_File_Event`
+registra os estados `PROCESSING`, `PROCESSED` e `FAILED`; eventos concluídos
+são reconhecidos sem repetir a importação. Falhas são relançadas para retry e
+Dead Letter Queue conforme o `max-delivery-count` da fila.
+
+O fluxo local pode ser validado com mocks, sem credenciais ou recursos Azure
+reais. Permanecem como limitações a ausência de hash e tamanho próprios para
+arquivos relacionados e a necessidade de ampliar os testes de concorrência,
+renovação de lock e consistência entre registro do evento e importação.
 
 ## 9. Mineração de dados
 

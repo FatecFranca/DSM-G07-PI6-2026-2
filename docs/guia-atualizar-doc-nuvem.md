@@ -4,7 +4,7 @@
 
 **Grupo:** DSM-G07
 
-**Objetivo:** registrar em `docs/documentacao-sprint2.md` o ambiente em nuvem criado no Azure. O banco PostgreSQL foi criado e populado com dados de teste. A API ainda não foi publicada.
+**Objetivo:** registrar em `docs/documentacao.md` o ambiente em nuvem criado no Azure. O banco PostgreSQL foi criado e populado com dados de teste. A API ainda não foi publicada.
 
 **Regras:** não escrever senha, connection string ou ID da assinatura. Não afirmar que há URL pública da API nem que os dados são reais.
 

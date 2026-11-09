@@ -9,7 +9,7 @@ Sempre que qualquer arquivo, funcionalidade, configuração, endpoint, entidade,
 script, tela, dependência ou processo do projeto for alterado, atualize também
 o documento geral na mesma entrega:
 
-- [`docs/documentacao-sprint2.md`](../../docs/documentacao-sprint2.md)
+- [`docs/documentacao.md`](../../docs/documentacao.md)
 
 ## Regras
 

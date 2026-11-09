@@ -4,9 +4,10 @@ import { AzureServiceBusService } from './azure-service-bus.service';
 import { CloudConfig } from './cloud.config';
 import { DataFileConsumerService } from './data-file-consumer.service';
 import { DataImportModule } from '../data-import/data-import.module';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [DataImportModule],
+  imports: [DataImportModule, PrismaModule],
   providers: [
     CloudConfig,
     AzureBlobStorageService,

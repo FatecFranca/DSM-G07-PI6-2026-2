@@ -34,8 +34,17 @@ npx prisma migrate deploy
 npm run prisma:seed
 ```
 
+Após atualizar o schema, execute `npm run prisma:migrate:deploy` em ambientes
+com migrations já criadas e `npm run prisma:generate` para atualizar o cliente
+Prisma usado pelo TypeScript/IDE. A entidade `PrevisaoProdutividade` exige a
+migration `20261106160000_productivity_predictions`.
+
 O seed cria o usuário de desenvolvimento `tecnico@cafe-pi.local` com a senha
-`Dev123456!`. Esses dados são apenas para desenvolvimento local.
+`Dev123456!`. Esses dados são apenas para desenvolvimento local. Também cria
+uma série demonstrativa de safras de 2022 a 2025 para café, soja, milho e
+cana-de-açúcar, condições climáticas mensais e previsões de produtividade para
+2026. A série é destinada à validação da interface e não representa dados
+oficiais de produção.
 
 ## Execução
 
@@ -68,10 +77,14 @@ rotas abaixo, exceto login e cadastro, exigem `Authorization: Bearer <token>`.
 | `PATCH` | `/safra/:id` | ADMIN/TECNICO | Atualiza rendimento |
 | `DELETE` | `/safra/:id` | ADMIN | Remove rendimento |
 | `GET` | `/clusters` | Autenticado | Retorna cluster climático preliminar por quatro variáveis |
+| `GET` | `/predicoes/:regiaoId?cultura=&versao=&ano=` | Autenticado | Consulta previsões offline de produtividade em t/ha |
 
 `GET /clusters` usa agrupamento preliminar com `k=2` sobre temperatura,
 precipitação, umidade e radiação solar. O endpoint de predições permanece
-reservado para a Sprint 3.
+disponível na Sprint 3. Ele consulta somente previsões importadas do pipeline;
+não treina nem executa modelos durante a requisição. A resposta informa
+cultura, ano previsto, valor, unidade, algoritmo, versões, métricas e aviso de
+limitação. Município sem previsão publicada retorna `404`.
 
 Os dados de clima são coletados pela NASA POWER. Os dados de safra vêm da série
 histórica oficial de café da CONAB, convertendo produtividade de sacas/ha para
@@ -94,6 +107,9 @@ O `tsconfig.json` do back-end inclui somente `src`, que é o diretório de
 produção definido por `rootDir`. Os testes e2e em `test/` são compilados pelo
 Jest usando `test/jest-e2e.json`, evitando o diagnóstico de arquivos fora do
 `rootDir` no editor e no build da API.
+
+O lint usa `tsconfig.eslint.json` para analisar `src`, testes e scripts sem
+alterar o `rootDir` de produção.
 
 Não versionar `.env`, credenciais, tokens ou arquivos de dados sensíveis.
 
@@ -121,6 +137,12 @@ O consumidor NestJS confirma a mensagem somente após o importador idempotente
 concluir. Falhas permanecem disponíveis para retry e dead-letter no Service
 Bus. O provisionamento inicial está em
 `infra/azure/provision.ps1`; ele não publica a API nem exibe segredos.
+
+O consumidor valida `DataFileAvailable v1`, SHA-256 e tamanho do blob antes da
+importação. Eventos processados ficam registrados em `Data_File_Event`, de
+modo que uma entrega duplicada é confirmada sem repetir a carga. Falhas são
+marcadas para observabilidade e lançadas novamente para respeitar retry/DLQ.
+O fluxo local pode ser validado com mocks, sem configurar credenciais Azure.
 
 
 ## Adaptação municipal e multiculturas
@@ -150,5 +172,11 @@ GET /regioes retorna { data, total, page, limit, totalPages }. Safras aceitam fi
 O pipeline deve gerar JSON validado com código IBGE, cultura, unidades e versão. Comando: npm run data:import:agricultural -- resultados.json
 
 O objeto raiz exige schemaVersion: 1, modelVersion, dataVersion (opcional), cultures (name, slug) e municipalities (code, name, uf, latitude, longitude). Arrays opcionais: harvests (code, crop, year, areaHa, productionT, yieldTPerHa), climate (uma linha por code, avgTemp, minTemp, avgDailyRain, annualRain, humidity, solarRadiation, januaryTemp, julyTemp, julyMinTemp, drySeasonRain, summerRain, thermalAmplitude, rainfallContrast), clusters, clusterProfiles, compatibilities (score de 0 a 1) e metrics. A importação valida referências e faixa geográfica e substitui resultados analíticos da mesma versão em transação, em lotes de 1.000 linhas. Safras são tratadas como snapshot completo para os municípios, culturas e anos incluídos no arquivo; não use um arquivo parcial de atualização. Ela não coleta dados nem executa o pipeline.
+
+O array opcional `predictions` aceita `{ code, crop, year, value, unit, algorithm,
+dataVersion, features, metrics, notice }`. `value` é produtividade prevista em
+`t/ha`; a previsão só é publicada quando o resultado possui código IBGE
+municipal explícito. A regressão atual é exploratória e teve desempenho temporal
+fraco, portanto não representa recomendação agronômica.
 
 Os dados municipais/analíticos completos ainda não estão no repositório. O carregamento real depende da exportação e revisão dos artefatos.
