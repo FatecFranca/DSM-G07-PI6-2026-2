@@ -42,6 +42,25 @@ cd ..\..\backend
 npm run data:import:agricultural -- ..\analytics\data\processed\artefato_agricola_v1.json
 ```
 
+Para automatizar esse fluxo em um worker separado, use o comando do backend.
+Por padrão ele opera em `artifact-only`, adequado para produção: importa
+somente um artefato JSON já validado. Em desenvolvimento, `full` executa as
+coletas, os notebooks e depois importa o artefato:
+
+```powershell
+cd backend
+$env:ANALYTICS_PIPELINE_MODE = "full"
+$env:ANALYTICS_PIPELINE_RUN_ONCE = "true"
+npm run pipeline:worker
+```
+
+O worker não é iniciado pelo processo HTTP da API. Para execução agendada,
+mantenha `ANALYTICS_PIPELINE_RUN_ONCE=false` e configure
+`ANALYTICS_PIPELINE_INTERVAL_MINUTES`. A execução usa lock atômico, publica
+somente após a importação transacional e grava o estado em
+`analytics/data/pipeline-status.json`. Se uma execução falhar, a versão
+anterior permanece publicada.
+
 | Notebook | Conteúdo | Depende do Postgres? |
 | --- | --- | --- |
 | `00_preprocessamento.ipynb` | Tratamento, novas variáveis e rótulos de aptidão | Não |

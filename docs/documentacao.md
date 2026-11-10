@@ -329,6 +329,27 @@ flowchart TB
 
 **Validação técnica:** `npm run lint` e `npm run build`. O cliente tipado está em `web/src/lib/api.ts` e a sessão em `web/src/lib/session.ts`.
 
+**Carregamento dos gráficos:** os dados de clima, produção, compatibilidade,
+métricas e perfil climático são carregados de forma independente. Se uma
+consulta falhar, o dashboard mantém os demais resultados disponíveis e exibe o
+erro da consulta que falhou, em vez de impedir a renderização de todos os
+gráficos por causa de uma única resposta inválida ou indisponível.
+
+O gráfico de sazonalidade climática usa os últimos 12 registros históricos de
+temperatura média. Cada barra possui uma área de plotagem com altura definida,
+garantindo que a escala percentual seja renderizada corretamente no navegador.
+
+**Automação do módulo de mineração:** o processamento agora pode ser executado
+por `backend` com `npm run pipeline:worker`, em processo separado da API. O
+modo `artifact-only` (padrão e recomendado para produção) importa somente
+`analytics/data/processed/artefato_agricola_v1.json`; o modo `full`, destinado
+ao desenvolvimento, executa coleta, notebooks e importação. O intervalo é
+configurado por `ANALYTICS_PIPELINE_INTERVAL_MINUTES` e
+`ANALYTICS_PIPELINE_RUN_ONCE`; `ANALYTICS_LOCK_PATH` impede concorrência e
+`ANALYTICS_STATUS_PATH` registra o resultado. O artefato só é publicado após
+validação e importação transacional, mantendo a última versão válida em caso
+de falha.
+
 ### 7.3. Aplicativo mobile (Expo)
 
 O projeto está em `mobile/`, com TypeScript, `EXPO_PUBLIC_API_URL`, login, consulta de regiões, logout, armazenamento seguro do JWT (`expo-secure-store`) e detalhe de clima e safra por região. Mostra o aviso de que o rendimento é uma referência regional. Pendentes: CRUD para Administrador e Técnico, cluster e compatibilidade de culturas, cache offline e extração dos contratos HTTP para um módulo compartilhado entre Web e Mobile.
@@ -390,6 +411,10 @@ representam a coleta oficial.
 | Variáveis de ambiente | `DATABASE_URL` (valor não registrado) |
 
 **Procedimento realizado:** (1) assinatura Azure for Students com o e-mail institucional; (2) login pelo Azure CLI; (3) criação do Resource Group `rg-cafe-pi6`; (4) registro do provedor `Microsoft.DBforPostgreSQL`; (5) criação do servidor `pg-cafe-pi6-g07`; (6) migrations e seed no banco da nuvem; (7) conferência dos dados pelo Prisma Studio.
+
+No desenvolvimento local, o `docker-compose.yml` publica o PostgreSQL na
+porta `5432`, alinhada ao `DATABASE_URL` usado pela API (`localhost:5432`).
+É necessário manter o Docker Desktop em execução antes de iniciar o NestJS.
 
 **Limitações e custo:** a API não está publicada, e o seed contém dados de teste. O crédito do Azure for Students é de US$ 100, com validade de 12 meses. A camada Burstable é indicada para desenvolvimento e testes.
 

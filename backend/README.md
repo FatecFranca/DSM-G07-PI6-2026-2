@@ -101,7 +101,32 @@ npm run test:e2e       # testes de integração
 npm run prisma:seed    # popula dados locais de forma reproduzível
 npm run data:import -- clima.csv safra.csv regiao-uf.csv # importa CSVs tratados
 npm run data:publish -- arquivo.csv clima [blob-name] [tipo:caminho] # envia Blob e publica evento
+npm run pipeline:worker # worker agendado; importa o artefato analítico
 ```
+
+## Worker do pipeline analítico
+
+O comando `pipeline:worker` executa fora do processo HTTP. Em produção, use o
+modo padrão `artifact-only` para importar somente um artefato completo e
+validado:
+
+```env
+ANALYTICS_PIPELINE_MODE=artifact-only
+ANALYTICS_ARTIFACT_PATH=analytics/data/processed/artefato_agricola_v1.json
+ANALYTICS_PIPELINE_INTERVAL_MINUTES=1440
+ANALYTICS_PIPELINE_RUN_ONCE=false
+```
+
+Em desenvolvimento, `ANALYTICS_PIPELINE_MODE=full` também executa as coletas e
+os notebooks Python antes da importação. O worker usa
+`ANALYTICS_PYTHON_COMMAND` e `ANALYTICS_JUPYTER_COMMAND` quando os executáveis
+não estiverem nos nomes padrão.
+
+`ANALYTICS_LOCK_PATH` impede duas execuções simultâneas e
+`ANALYTICS_STATUS_PATH` grava `running`, `succeeded`, `failed` ou `skipped`.
+Uma nova versão só é publicada pelo importador depois que o JSON completo é
+validado; falhas não removem a última versão válida. O worker deve ser
+executado por um agendador/processo separado, não dentro do startup da API.
 
 O `tsconfig.json` do back-end inclui somente `src`, que é o diretório de
 produção definido por `rootDir`. Os testes e2e em `test/` são compilados pelo
