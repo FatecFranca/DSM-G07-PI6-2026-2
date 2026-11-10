@@ -27,9 +27,9 @@
     "data:import:agricultural": "ts-node scripts/import-agricultural-results.ts"
   },
   "dependencies": {
-    "@azure/identity": "^4.10.2",
-    "@azure/service-bus": "^7.9.5",
-    "@azure/storage-blob": "^12.28.0",
+    "@azure/identity": "4.3.0",
+    "@azure/service-bus": "7.9.5",
+    "@azure/storage-blob": "12.24.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.1",
@@ -55,7 +55,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.19.2",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.0.0",
     "eslint": "^9.18.0",
