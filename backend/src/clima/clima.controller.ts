@@ -38,6 +38,16 @@ export class ClimaController {
     return this.climaService.findClimatologia(regiaoId, req.user);
   }
 
+  @Post('municipios/:regiaoId/coletar')
+  @Roles('ADMIN', 'TECNICO')
+  @ApiOperation({ summary: 'Coleta climatologia da região na NASA POWER' })
+  collectClimatologia(
+    @Param('regiaoId') regiaoId: string,
+    @Req() req: { user: { id: string; perfil: string } },
+  ) {
+    return this.climaService.collectClimatologia(regiaoId, req.user);
+  }
+
   @Get(':regiaoId')
   @ApiOperation({
     summary: 'Histórico climático da região com filtro opcional de período',

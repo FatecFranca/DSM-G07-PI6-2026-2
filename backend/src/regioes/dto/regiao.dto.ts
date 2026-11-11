@@ -21,7 +21,7 @@ export class CreateRegiaoDto {
   @ApiProperty({ example: '3516200' }) @Matches(/^\d{7}$/) codigoIbge: string;
   @ApiProperty({ example: 'SP' })
   @Length(2, 2)
-  @Matches(/^(ES|MG|SP)$/)
+  @Matches(/^[A-Z]{2}$/)
   uf: string;
   @ApiPropertyOptional({ example: -20.5386 })
   @IsOptional()

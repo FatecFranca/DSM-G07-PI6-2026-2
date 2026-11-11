@@ -69,6 +69,7 @@ rotas abaixo, exceto login e cadastro, exigem `Authorization: Bearer <token>`.
 | `PATCH` | `/regioes/:id` | ADMIN/TECNICO | Atualiza região |
 | `DELETE` | `/regioes/:id` | ADMIN | Remove região |
 | `GET` | `/clima/:regiaoId?de=YYYY-MM-DD&ate=YYYY-MM-DD` | Autenticado | Lista condições climáticas, opcionalmente filtradas por período |
+| `POST` | `/clima/municipios/:regiaoId/coletar` | ADMIN/TECNICO | Consulta a climatologia da região na NASA POWER |
 | `POST` | `/clima` | ADMIN/TECNICO | Cria condição climática |
 | `PATCH` | `/clima/:id` | ADMIN/TECNICO | Atualiza condição climática |
 | `DELETE` | `/clima/:id` | ADMIN | Remove condição climática |
@@ -86,7 +87,8 @@ não treina nem executa modelos durante a requisição. A resposta informa
 cultura, ano previsto, valor, unidade, algoritmo, versões, métricas e aviso de
 limitação. Município sem previsão publicada retorna `404`.
 
-Os dados de clima são coletados pela NASA POWER. Os dados de safra vêm da série
+Os dados de clima são coletados pela NASA POWER para qualquer município com
+coordenadas válidas. Os dados de safra vêm da série
 histórica oficial de café da CONAB, convertendo produtividade de sacas/ha para
 toneladas/ha (1 saca = 60 kg). O rendimento da CONAB é agregado por
 UF e deve ser apresentado como referência regional, não como medição individual.

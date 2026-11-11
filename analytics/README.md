@@ -8,7 +8,7 @@ culturas combinam com o clima de cada município**.
 
 | Base | Fonte | Script | Saída bruta |
 | --- | --- | --- | --- |
-| Clima (climatologia) de 1.576 municípios de ES, MG e SP | NASA POWER | `scripts/coletar_clima_municipios.py` | `data/raw/clima_municipios.csv` |
+| Clima (climatologia) de municípios brasileiros | NASA POWER | `scripts/coletar_clima_municipios.py` | `data/raw/clima_municipios.csv` |
 | Área, produção e rendimento por município, cultura e ano (2001–2024) | IBGE / PAM | `scripts/coletar_ibge_pam.py` | `data/raw/pam_culturas_municipios.csv` |
 | Latitude e longitude dos municípios | `kelvins/municipios-brasileiros` | (baixado pelo script de clima) | `data/raw/municipios_coord.csv` |
 
@@ -16,7 +16,9 @@ Culturas: café, cana-de-açúcar, soja, milho, laranja e feijão. As bases se l
 código do município (IBGE).
 
 Os arquivos de `data/raw/` e `data/processed/` não são versionados: cada pessoa roda
-a coleta e os notebooks.
+a coleta e os notebooks. O coletor climático aceita municípios de qualquer UF;
+o recorte do artefato é definido pelo arquivo de municípios fornecido ao
+pipeline.
 
 ## Execução
 
@@ -119,7 +121,10 @@ e `compatibilidade_culturas.csv`.
 - "Apto" é medido pela área colhida que já existe (média 2015–2024 ≥ 500 ha), e isso
   depende também de mercado e tradição.
 - O clima da NASA tem cerca de 50 km de resolução e não enxerga altitude, solo ou relevo.
-- Só ES, MG e SP. Laranja e feijão têm poucos exemplos positivos.
+- O modelo de referência continua treinado com ES, MG e SP; novas UFs podem
+  ter climatologia coletada, mas exigem reprocessamento e validação antes de
+  entrarem nas comparações analíticas. Laranja e feijão têm poucos exemplos
+  positivos.
 - A previsão de produtividade (t/ha) foi testada com dados da CONAB (por estado) e do
   IBGE (por município) e foi fraca (R² próximo de zero em anos futuros). Por isso o
   foco é a aptidão. Os scripts `coletar_nasa_power.py` e `coletar_conab.py` ficam como

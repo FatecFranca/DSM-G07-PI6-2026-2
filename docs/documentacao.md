@@ -350,6 +350,18 @@ configurado por `ANALYTICS_PIPELINE_INTERVAL_MINUTES` e
 validação e importação transacional, mantendo a última versão válida em caso
 de falha.
 
+**Novas regiões de plantio:** `ADMIN` e `TECNICO` podem cadastrar e editar
+regiões pelo Web. O cadastro exige código IBGE de sete dígitos, UF com duas
+letras e coordenadas opcionais; a coleta climática fica disponível pelo botão
+`Atualizar clima NASA`, que chama `POST /clima/municipios/:regiaoId/coletar`.
+Essa rota consulta a climatologia anual e sazonal da NASA POWER e persiste uma
+versão `nasa-power-live`. A região pode ser de qualquer UF, mas a comparação
+com culturas continua exploratória e depende de dados climáticos válidos; o
+cadastro não cria histórico de produção, compatibilidades ou previsões por si
+só. A adaptação do pipeline para reclassificar automaticamente uma região
+recém-cadastrada permanece como pendência; até essa etapa, a tela exibe apenas
+os resultados analíticos que já tiverem sido importados para a região.
+
 ### 7.3. Aplicativo mobile (Expo)
 
 O projeto está em `mobile/`, com TypeScript, `EXPO_PUBLIC_API_URL`, login, consulta de regiões, logout, armazenamento seguro do JWT (`expo-secure-store`) e detalhe de clima e safra por região. Mostra o aviso de que o rendimento é uma referência regional. Pendentes: CRUD para Administrador e Técnico, cluster e compatibilidade de culturas, cache offline e extração dos contratos HTTP para um módulo compartilhado entre Web e Mobile.
@@ -506,7 +518,9 @@ O *baseline* é a acurácia de responder sempre "não apto". Laranja e feijão s
 
 1. **"Apto" é medido pela área plantada que já existe**, que depende também de mercado, tradição e tamanho do município.
 2. O clima da NASA tem cerca de 50 km de resolução e **não enxerga altitude, solo nem relevo**.
-3. Cobertura limitada a ES, MG e SP.
+3. O modelo de referência foi treinado com ES, MG e SP; o cadastro e a coleta
+   climática aceitam outras UFs, mas a análise de uma nova UF depende de
+   reprocessamento e validação do pipeline.
 4. O limite de 500 ha é uma escolha do grupo (foi testada a sensibilidade a 200 e 1.000 ha).
 5. Laranja e feijão têm baixa precisão.
 6. Os resultados estão em arquivos; a integração ao banco, à API e às telas ainda não foi feita.

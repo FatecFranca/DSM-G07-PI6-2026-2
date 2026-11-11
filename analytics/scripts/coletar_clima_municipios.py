@@ -1,4 +1,4 @@
-"""Coleta a climatologia da NASA POWER para os municípios de ES, MG e SP.
+"""Coleta a climatologia da NASA POWER para municípios brasileiros.
 
 Para cada município usa a latitude e a longitude do centro do município
 (lista pública `kelvins/municipios-brasileiros`) e consulta a climatologia
@@ -26,9 +26,6 @@ MUNICIPIOS_URL = (
     "https://raw.githubusercontent.com/kelvins/municipios-brasileiros/main/csv/municipios.csv"
 )
 PARAMETROS = "T2M,T2M_MIN,PRECTOTCORR,RH2M,ALLSKY_SFC_SW_DWN"
-UFS = {31: "MG", 32: "ES", 35: "SP"}
-
-
 def consultar(linha) -> dict | None:
     query = urllib.parse.urlencode(
         {
@@ -75,8 +72,6 @@ def main() -> None:
         args.municipios.parent.mkdir(parents=True, exist_ok=True)
         pd.read_csv(MUNICIPIOS_URL).to_csv(args.municipios, index=False)
     municipios = pd.read_csv(args.municipios)
-    municipios = municipios[municipios["codigo_uf"].isin(UFS)]
-
     feitos = pd.read_csv(args.output) if args.output.exists() else pd.DataFrame()
     ja = set(feitos["cod"]) if len(feitos) else set()
     pendentes = municipios[~municipios["codigo_ibge"].isin(ja)]

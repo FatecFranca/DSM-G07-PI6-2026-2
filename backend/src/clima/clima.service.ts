@@ -42,6 +42,79 @@ export class ClimaService {
     });
   }
 
+  async collectClimatologia(regiaoId: string, user: AuthenticatedUser) {
+    await this.accessScope.assertRegionAccess(regiaoId, user);
+    const region = await this.prisma.regiaoProdutora.findUnique({
+      where: { id: regiaoId },
+      select: { latitude: true, longitude: true },
+    });
+    if (region?.latitude == null || region.longitude == null) {
+      throw new NotFoundException(
+        'A região precisa de latitude e longitude para coletar o clima',
+      );
+    }
+    const params = new URLSearchParams({
+      parameters: 'T2M,T2M_MIN,PRECTOTCORR,RH2M,ALLSKY_SFC_SW_DWN',
+      community: 'AG',
+      longitude: String(region.longitude),
+      latitude: String(region.latitude),
+      format: 'JSON',
+    });
+    const response = await fetch(
+      `https://power.larc.nasa.gov/api/temporal/climatology/point?${params}`,
+    );
+    if (!response.ok) {
+      throw new Error(`NASA POWER retornou HTTP ${response.status}`);
+    }
+    const body = (await response.json()) as {
+      properties?: { parameter?: Record<string, Record<string, number>> };
+    };
+    const parameter = body.properties?.parameter;
+    if (!parameter?.T2M?.ANN || !parameter.T2M_MIN?.ANN) {
+      throw new Error('Resposta da NASA POWER sem climatologia anual válida');
+    }
+    const average = (name: string, months: string[]) =>
+      months.reduce((sum, month) => sum + (parameter[name]?.[month] ?? 0), 0) /
+      months.length;
+    return this.prisma.climaRegiao.upsert({
+      where: {
+        regiaoId_versaoDados: { regiaoId, versaoDados: 'nasa-power-live' },
+      },
+      update: {
+        temperaturaMedia: parameter.T2M.ANN,
+        temperaturaMin: parameter.T2M_MIN.ANN,
+        chuvaMediaDiaria: parameter.PRECTOTCORR?.ANN ?? null,
+        chuvaAnual: parameter.PRECTOTCORR?.ANN
+          ? parameter.PRECTOTCORR.ANN * 365
+          : null,
+        umidade: parameter.RH2M?.ANN ?? null,
+        radiacaoSolar: parameter.ALLSKY_SFC_SW_DWN?.ANN ?? null,
+        temperaturaJaneiro: parameter.T2M?.JAN ?? null,
+        temperaturaJulho: parameter.T2M?.JUL ?? null,
+        temperaturaMinimaJulho: parameter.T2M_MIN?.JUL ?? null,
+        chuvaEstacaoSeca: average('PRECTOTCORR', ['JUN', 'JUL', 'AUG']),
+        chuvaVerao: average('PRECTOTCORR', ['DEC', 'JAN', 'FEB']),
+      },
+      create: {
+        regiaoId,
+        versaoDados: 'nasa-power-live',
+        temperaturaMedia: parameter.T2M.ANN,
+        temperaturaMin: parameter.T2M_MIN.ANN,
+        chuvaMediaDiaria: parameter.PRECTOTCORR?.ANN ?? null,
+        chuvaAnual: parameter.PRECTOTCORR?.ANN
+          ? parameter.PRECTOTCORR.ANN * 365
+          : null,
+        umidade: parameter.RH2M?.ANN ?? null,
+        radiacaoSolar: parameter.ALLSKY_SFC_SW_DWN?.ANN ?? null,
+        temperaturaJaneiro: parameter.T2M?.JAN ?? null,
+        temperaturaJulho: parameter.T2M?.JUL ?? null,
+        temperaturaMinimaJulho: parameter.T2M_MIN?.JUL ?? null,
+        chuvaEstacaoSeca: average('PRECTOTCORR', ['JUN', 'JUL', 'AUG']),
+        chuvaVerao: average('PRECTOTCORR', ['DEC', 'JAN', 'FEB']),
+      },
+    });
+  }
+
   async create(dto: CreateClimaDto, user: AuthenticatedUser) {
     await this.accessScope.assertRegionAccess(dto.regiaoId, user);
     return this.prisma.condicaoClimatica.create({
