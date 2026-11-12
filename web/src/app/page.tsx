@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const signals = [
-  { title: "Clima municipal", text: "Sazonalidade, chuva e temperatura reunidas em uma leitura simples." },
-  { title: "Histórico de safra", text: "Produção e rendimento organizados por cultura e ano." },
-  { title: "Culturas compatíveis", text: "Resultados analíticos apresentados com contexto e transparência." },
+  { title: "Clima municipal", href: "/dashboard?aba=clima", text: "Sazonalidade, chuva e temperatura reunidas em uma leitura simples." },
+  { title: "Histórico de safra", href: "/dashboard?aba=producao", text: "Produção e rendimento organizados por cultura e ano." },
+  { title: "Culturas compatíveis", href: "/dashboard?aba=culturas", text: "Resultados analíticos apresentados com contexto e transparência." },
 ];
 
 export default function Home() {
@@ -45,9 +45,9 @@ export default function Home() {
         </div>
         <div className="self-center" data-ui="feature-list">
           {signals.map((signal) => (
-            <article className="mb-3 grid grid-cols-[1fr_auto] gap-x-8 gap-y-2 bg-[#0f1a0f]/[0.06] p-6 last:mb-0" key={signal.title}>
+            <Link href={signal.href} className="mb-3 grid grid-cols-[1fr_auto] gap-x-8 gap-y-2 bg-[#0f1a0f]/[0.06] p-6 transition hover:bg-[#0f1a0f]/[0.12] last:mb-0" key={signal.title}>
               <h3 className="text-[clamp(1.25rem,2vw,1.75rem)] font-medium">{signal.title}</h3><p className="max-w-lg leading-relaxed text-[#5a5144]">{signal.text}</p><span className="col-start-2 row-span-2 row-start-1 self-center text-2xl text-[#3d2b1f]" aria-hidden="true">↗</span>
-            </article>
+            </Link>
           ))}
         </div>
       </section>
