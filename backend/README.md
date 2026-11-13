@@ -79,6 +79,11 @@ rotas abaixo, exceto login e cadastro, exigem `Authorization: Bearer <token>`.
 | `DELETE` | `/safra/:id` | ADMIN | Remove rendimento |
 | `GET` | `/clusters` | Autenticado | Retorna cluster climático preliminar por quatro variáveis |
 | `GET` | `/predicoes/:regiaoId?cultura=&versao=&ano=` | Autenticado | Consulta previsões offline de produtividade em t/ha |
+| `GET` | `/notificacoes?naoLidas=true` | Autenticado | Lista notificações climáticas do usuário |
+| `PATCH` | `/notificacoes/:id/lida` | Autenticado | Marca uma notificação como lida |
+| `GET` | `/notificacoes/preferencias` | Autenticado | Lista preferências de canais |
+| `POST` | `/notificacoes/preferencias` | Autenticado | Habilita/desabilita canal por região e tipo |
+| `POST` | `/notificacoes/dispositivos` | Autenticado | Registra token de push do Mobile |
 
 `GET /clusters` usa agrupamento preliminar com `k=2` sobre temperatura,
 precipitação, umidade e radiação solar. O endpoint de predições permanece
@@ -170,6 +175,22 @@ importação. Eventos processados ficam registrados em `Data_File_Event`, de
 modo que uma entrega duplicada é confirmada sem repetir a carga. Falhas são
 marcadas para observabilidade e lançadas novamente para respeitar retry/DLQ.
 O fluxo local pode ser validado com mocks, sem configurar credenciais Azure.
+
+## Alertas climáticos e notificações
+
+Ao criar uma condição climática em `POST /clima`, o backend avalia limites
+configuráveis para temperatura média e precipitação. Os limites são
+`CLIMATE_ALERT_HIGH_TEMP_C`, `CLIMATE_ALERT_LOW_TEMP_C`,
+`CLIMATE_ALERT_HEAVY_RAIN_MM` e `CLIMATE_ALERT_DROUGHT_RAIN_MM`. A mesma
+avaliação aceita registros com data futura, permitindo integrar previsões sem
+duplicar regra no frontend.
+
+Os alertas são persistidos com chave de supressão por região, tipo e data.
+Notificações só são criadas para canais explicitamente habilitados pelo
+usuário, e a chave `usuario + alerta + canal` garante idempotência. O Web
+consome a central em `/notificacoes` por polling; o registro de dispositivos
+prepara push Expo e o canal de e-mail permanece dependente de um provedor
+configurável. O fluxo atual ainda não envia chamadas externas de push/e-mail.
 
 
 ## Adaptação municipal e multiculturas

@@ -5,12 +5,14 @@ import {
   AccessScopeService,
   AuthenticatedUser,
 } from '../auth/access-scope.service';
+import { NotificacoesService } from '../notificacoes/notificacoes.service';
 
 @Injectable()
 export class ClimaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accessScope: AccessScopeService,
+    private readonly notificacoes: NotificacoesService,
   ) {}
 
   async findByRegiao(
@@ -117,9 +119,11 @@ export class ClimaService {
 
   async create(dto: CreateClimaDto, user: AuthenticatedUser) {
     await this.accessScope.assertRegionAccess(dto.regiaoId, user);
-    return this.prisma.condicaoClimatica.create({
+    const condition = await this.prisma.condicaoClimatica.create({
       data: { ...dto, data: new Date(dto.data) },
     });
+    await this.notificacoes.evaluateCondition(condition);
+    return condition;
   }
 
   async update(id: string, dto: UpdateClimaDto, user: AuthenticatedUser) {

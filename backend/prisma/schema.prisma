@@ -10,6 +10,22 @@ enum PerfilUsuario {
   TECNICO
   PRODUTOR
 }
+enum TipoAlertaClimatica {
+  TEMPERATURA_ALTA
+  TEMPERATURA_BAIXA
+  CHUVA_INTENSA
+  ESTIAGEM
+}
+enum SeveridadeAlerta {
+  INFO
+  WARNING
+  CRITICAL
+}
+enum CanalNotificacao {
+  WEB
+  PUSH
+  EMAIL
+}
 model Usuario {
   id String @id @default(cuid())
   email String @unique
@@ -19,6 +35,9 @@ model Usuario {
   criadoEm DateTime @default(now())
   atualizadoEm DateTime @updatedAt
   regioes RegiaoProdutora[] @relation("UsuarioRegioes")
+  preferenciasNotificacao PreferenciaNotificacao[]
+  notificacoes Notificacao[]
+  dispositivosPush DispositivoPush[]
 }
 model RegiaoProdutora {
   id String @id @default(cuid())
@@ -34,6 +53,7 @@ model RegiaoProdutora {
   clusters ClusterRegiao[]
   compatibilidades CompatibilidadeCultura[]
   predicoes PrevisaoProdutividade[]
+  alertasClimaticos AlertaClimatico[]
   usuarios Usuario[] @relation("UsuarioRegioes")
   @@index([uf])
   @@map("Regiao_Produtora")
@@ -165,6 +185,68 @@ model DataFileEvent {
   errorMessage String?
   @@index([status, receivedAt])
   @@map("Data_File_Event")
+}
+model AlertaClimatico {
+  id String @id @default(cuid())
+  regiaoId String
+  tipo TipoAlertaClimatica
+  severidade SeveridadeAlerta
+  titulo String
+  mensagem String
+  valor Float?
+  unidade String?
+  observadoEm DateTime
+  fonte String
+  chaveSupressao String
+  criadoEm DateTime @default(now())
+  regiao RegiaoProdutora @relation(fields: [regiaoId], references: [id], onDelete: Cascade)
+  notificacoes Notificacao[]
+  @@unique([regiaoId, chaveSupressao])
+  @@index([regiaoId, observadoEm])
+  @@map("Alerta_Climatico")
+}
+model PreferenciaNotificacao {
+  id String @id @default(cuid())
+  usuarioId String
+  regiaoId String?
+  tipo TipoAlertaClimatica?
+  canal CanalNotificacao
+  habilitada Boolean @default(false)
+  severidadeMinima SeveridadeAlerta @default(INFO)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  @@unique([usuarioId, regiaoId, tipo, canal])
+  @@index([usuarioId, habilitada])
+  @@map("Preferencia_Notificacao")
+}
+model DispositivoPush {
+  id String @id @default(cuid())
+  usuarioId String
+  token String @unique
+  plataforma String
+  ativo Boolean @default(true)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  @@index([usuarioId, ativo])
+  @@map("Dispositivo_Push")
+}
+model Notificacao {
+  id String @id @default(cuid())
+  usuarioId String
+  alertaId String
+  canal CanalNotificacao
+  status String @default("PENDING")
+  titulo String
+  mensagem String
+  lidaEm DateTime?
+  enviadaEm DateTime?
+  erro String?
+  criadoEm DateTime @default(now())
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  alerta AlertaClimatico @relation(fields: [alertaId], references: [id], onDelete: Cascade)
+  @@unique([usuarioId, alertaId, canal])
+  @@index([usuarioId, status, criadoEm])
+  @@map("Notificacao")
 }
 model PrevisaoProdutividade {
   id String @id @default(cuid())

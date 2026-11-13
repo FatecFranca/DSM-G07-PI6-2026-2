@@ -10,6 +10,8 @@ export interface ClusterAssignment { id: string; regiaoId: string; grupo: number
 export interface MetricaModelo { id: string; algoritmo: string; acuracia: number | null; acuraciaBalanceada: number | null; precisao: number | null; recall: number | null; f1: number | null; auc: number | null; baseline: number | null; matrizConfusao: unknown; versaoModelo: string; cultura: Cultura; executadoEm: string; }
 export interface Predicao { id: string; cultura: Cultura; ano: number; valor: number; unidade: string; algoritmo: string; versaoModelo: string; versaoDados: string | null; features: Record<string, unknown> | null; metricas: Record<string, unknown> | null; aviso: string; executadoEm: string; }
 export interface PredicoesResponse { municipio: Regiao; previsoes: Predicao[]; }
+export interface Notificacao { id: string; canal: 'WEB' | 'PUSH' | 'EMAIL'; status: string; titulo: string; mensagem: string; lidaEm: string | null; criadoEm: string; alerta: { regiaoId: string; tipo: string; severidade: string; observadoEm: string }; }
+export interface PreferenciaNotificacao { id: string; regiaoId: string | null; tipo: string | null; canal: 'WEB' | 'PUSH' | 'EMAIL'; habilitada: boolean; severidadeMinima: string; }
 export class ApiError extends Error { constructor(message: string, readonly status: number) { super(message); this.name = 'ApiError'; } }
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace(/\/$/, '');
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
@@ -40,4 +42,8 @@ export const api = {
  clusters(regiaoId: string, token: string) { return request<ClusterAssignment[]>('/clusters/' + regiaoId, {}, token); },
  metricas(token: string, cultura?: string) { const q = cultura ? '?cultura=' + encodeURIComponent(cultura) : ''; return request<MetricaModelo[]>('/modelos/metricas' + q, {}, token); },
  predicoes(regiaoId: string, token: string, filters: { cultura?: string; versao?: string; ano?: number } = {}) { const q = new URLSearchParams(); Object.entries(filters).forEach(([k, v]) => { if (v !== undefined && v !== '') q.set(k, String(v)); }); const suffix = q.toString() ? '?' + q.toString() : ''; return request<PredicoesResponse>('/predicoes/' + regiaoId + suffix, {}, token); },
+ notificacoes(token: string, apenasNaoLidas = false) { return request<Notificacao[]>('/notificacoes' + (apenasNaoLidas ? '?naoLidas=true' : ''), {}, token); },
+ marcarNotificacaoLida(token: string, id: string) { return request<Notificacao>('/notificacoes/' + id + '/lida', { method: 'PATCH' }, token); },
+ preferenciasNotificacao(token: string) { return request<PreferenciaNotificacao[]>('/notificacoes/preferencias', {}, token); },
+ salvarPreferenciaNotificacao(token: string, data: { regiaoId?: string; tipo?: string; canal: string; habilitada: boolean; severidadeMinima?: string }) { return request<PreferenciaNotificacao>('/notificacoes/preferencias', { method: 'POST', body: JSON.stringify(data) }, token); },
 };

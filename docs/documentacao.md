@@ -18,6 +18,26 @@ da Sprint 1, a implementação da Sprint 2 e a transição para a Sprint 3,
 incluindo o estado atual do back-end, analytics, Web, Mobile, banco de dados,
 nuvem, mensageria e limitações conhecidas.
 
+### 1.1.1. Alertas climáticos e mensageria de usuários
+
+O backend agora avalia condições climáticas persistidas e registra alertas de
+temperatura alta/baixa, chuva intensa e baixa precipitação. Os limites são
+configuráveis por ambiente, sem regra duplicada no Web. Dados observados e
+registros futuros (para integração posterior com previsões) usam o mesmo
+motor.
+
+As entidades `Alerta_Climatico`, `Preferencia_Notificacao`,
+`Dispositivo_Push` e `Notificacao` controlam supressão, opt-in, dispositivos e
+histórico. A API autenticada oferece listagem, marcação como lida,
+preferências e registro de token. A central Web está em `/notificacoes` e usa
+polling de 60 segundos. O push priorizará Expo e o e-mail ficará atrás de um
+provedor configurável; nesta entrega esses dois canais são registrados como
+pendentes, sem envio externo.
+
+Limitação: a fila/topic dedicado `ClimateAlertCreated` e o dispatcher externo
+com retry/DLQ ainda são etapas seguintes. A mensageria `DataFileAvailable`
+continua exclusiva para ingestão de arquivos e não é reutilizada para alertas.
+
 ---
 
 ## 1. Visão geral e evolução do projeto

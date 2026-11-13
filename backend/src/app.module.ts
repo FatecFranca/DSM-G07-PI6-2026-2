@@ -10,6 +10,7 @@ import { CulturasModule } from './culturas/culturas.module';
 import { CompatibilidadesModule } from './compatibilidades/compatibilidades.module';
 import { ModelosModule } from './modelos/modelos.module';
 import { PredicoesModule } from './predicoes/predicoes.module';
+import { NotificacoesModule } from './notificacoes/notificacoes.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PredicoesModule } from './predicoes/predicoes.module';
     CompatibilidadesModule,
     ModelosModule,
     PredicoesModule,
+    NotificacoesModule,
   ],
 })
 export class AppModule {}
