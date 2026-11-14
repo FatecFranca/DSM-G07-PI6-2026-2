@@ -11,9 +11,9 @@ senhas, URLs privadas ou outras credenciais.
 | E-01 | Back-end CRUD | [Controllers e DTOs](../../backend/src/), testes e2e e [print do Swagger](./swagger-api.png) | Reproduzível |
 | E-02 | Front-end Web | [Dashboard](../../web/src/app/dashboard/page.tsx), [cliente HTTP](../../web/src/lib/api.ts) e [print do dashboard](./dashboard-web.png) | Reproduzível |
 | E-03 | Front-end Mobile | [App Expo](../../mobile/App.tsx) e [cliente HTTP](../../mobile/src/api.ts) | Reproduzível |
-| E-04 | Banco de dados | [Schema Prisma](../../backend/prisma/schema.prisma), seed e PostgreSQL local | Reproduzível |
+| E-04 | Banco de dados | [Schema Prisma](../../backend/prisma/schema.prisma), seed e PostgreSQL local; banco no Azure com os dados importados (`nuvem-servico3.png` e `nuvem-servico4.png`) | Capturada |
 | E-05 | Commits da equipe | [Histórico Git](./git-historico.txt) | Reproduzível |
-| E-06 | Nuvem | Arquitetura Azure, script de provisionamento e publicação real | Base implementada; publicação externa pendente |
+| E-06 | Nuvem | Banco PostgreSQL, API (App Service), Blob e Service Bus no Azure (`nuvem-recurso*.png`, `nuvem-servico*.png`, `nuvem-endpoint.txt`, `nuvem-configuracao.txt`); integração da fila ainda não ativada | Parcial |
 | E-07 | Coleta e tratamento | [Scripts de coleta](../../analytics/scripts/) e [README analytics](../../analytics/README.md) | Scripts validados |
 | E-08 | Mineração de dados | [Clusters](../../backend/src/clusters/) e notebooks analíticos | Resultado preliminar |
 | E-09 | Validação técnica | [Backend](./backend-validacao.txt), [Web](./web-validacao.txt), [Mobile](./mobile-validacao.txt) e [Analytics](./analytics-validacao.txt) | Aprovado |
@@ -142,36 +142,49 @@ inventada localmente. O repositório agora contém:
 3. [consumidor de arquivos](../../backend/src/cloud/data-file-consumer.service.ts);
 4. comando `npm run data:publish` documentado no README do backend.
 
-Ainda é necessário criar os recursos Azure, configurar a identidade gerenciada,
-publicar a aplicação e anexar prints anonimizados de recurso, serviço,
-health check, endpoint e custos/limites.
+**Já feito no Azure:** o servidor PostgreSQL `pg-cafe-pi6-g07` (Brazil South, camada
+Burstable) está criado, com as 5 migrations aplicadas e o artefato analítico
+importado (1.576 municípios, 152.797 safras e 9.456 compatibilidades). Prints:
+`nuvem-recurso1.png`, `nuvem-recurso2.jpg`, `nuvem-recurso3.png` (Rede),
+`nuvem-recurso4.png` (visão geral), `nuvem-servico1.png`, `nuvem-servico2.jpeg`,
+`nuvem-servico3.png` (migrations e importação) e `nuvem-servico4.png` (Prisma Studio).
+
+**Também feito:** a API foi publicada no App Service (`api-cafe-pi6-g07`, Node 24, plano B1),
+e o Blob Storage e o Service Bus foram criados com `infra/azure/provision.ps1`.
+As respostas da API publicada e os comandos usados estão em `nuvem-endpoint.txt` e
+`nuvem-configuracao.txt` (sem segredos).
+
+**Ainda pendente:** identidade gerenciada do app com os papéis do Blob e do Service Bus,
+ativação da integração (`AZURE_INTEGRATION_ENABLED=true`) e teste do fluxo com um CSV,
+e o print do App Service no portal. Já existe um usuário ADMIN para a demonstração.
 
 ## E-07 e E-08 — Analytics
 
-### Coleta NASA POWER
+### Coleta de clima (NASA POWER) e de produção (IBGE PAM)
 
 ```powershell
 Set-Location analytics
-python scripts\coletar_nasa_power.py `
-  --regions data\regions.csv `
-  --output data\raw\clima_nasa.csv `
-  --start 20010101 `
-  --end 20251231
+python scripts\coletar_clima_municipios.py
+python scripts\coletar_ibge_pam.py
 ```
 
-### Coleta CONAB
+### Notebooks e artefato
+
+Executar os notebooks `00`, `02`, `03` e `04` e, depois, o `01_ingestao`, que gera
+`data/processed/artefato_agricola_v1.json`. Importação no banco:
 
 ```powershell
-python scripts\coletar_conab.py --baixar `
-  --output data\raw\safra_conab.csv
+Set-Location backend
+npm run data:import:agricultural -- ..\analytics\data\processed\artefato_agricola_v1.json
 ```
 
 ### Trechos de código
 
-- [coletar_nasa_power.py](../../analytics/scripts/coletar_nasa_power.py)
-- [coletar_conab.py](../../analytics/scripts/coletar_conab.py)
-- [clusters.service.ts](../../backend/src/clusters/clusters.service.ts)
+- [coletar_clima_municipios.py](../../analytics/scripts/coletar_clima_municipios.py)
+- [coletar_ibge_pam.py](../../analytics/scripts/coletar_ibge_pam.py)
+- [Notebook de pré-processamento](../../analytics/notebooks/00_preprocessamento.ipynb)
 - [Notebook K-Means](../../analytics/notebooks/03_kmeans.ipynb)
+- [Notebook de classificação](../../analytics/notebooks/04_classificacao.ipynb)
 
 Os scripts foram compilados com `py_compile` e executados: o clima da NASA
 POWER (2001-2025) foi coletado para as 8 regiões brasileiras de `data/regions.csv`

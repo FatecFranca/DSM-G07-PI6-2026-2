@@ -438,21 +438,29 @@ representam a coleta oficial.
 | Serviço | Azure Database for PostgreSQL Flexible Server (camada Burstable, `Standard_B1ms`) |
 | Versão | PostgreSQL 16 |
 | Forma de implantação | Azure CLI (`az postgres flexible-server create`) |
-| Acesso | Público, restrito por regra de firewall ao IP do administrador |
-| API | **Não publicada** (roda localmente e se conecta ao banco da nuvem nas cargas) |
-| Variáveis de ambiente | `DATABASE_URL` (valor não registrado) |
+| Acesso | Público, restrito por regras de firewall aos IPs dos administradores |
+| Schema | Modelo agrícola completo (5 migrations aplicadas) |
+| Dados | Artefato analítico `cafe-pi-2026-10-v1` importado: 1.576 municípios, 6 culturas, 152.786 safras, 1.576 climas, 1.576 clusters, 9.456 compatibilidades e 6 conjuntos de métricas |
+| API | **Publicada** em `https://api-cafe-pi6-g07.azurewebsites.net` (App Service Linux, Node 24 LTS, plano B1); Swagger em `/api` |
+| Blob Storage e Service Bus | **Criados** (`stcafepi6g07`, container `data-treated`; `sb-cafe-pi6-g07`, fila `data-file-available`). A integração está **desativada** na API (`AZURE_INTEGRATION_ENABLED=false`) e o fluxo ainda não foi testado na nuvem (ver 8.3) |
+| Variáveis de ambiente | `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, `SCM_DO_BUILD_DURING_DEPLOYMENT`, `AZURE_INTEGRATION_ENABLED` e `WEBSITES_CONTAINER_START_TIME_LIMIT` (valores não registrados) |
 
-**Procedimento realizado:** (1) assinatura Azure for Students com o e-mail institucional; (2) login pelo Azure CLI; (3) criação do Resource Group `rg-cafe-pi6`; (4) registro do provedor `Microsoft.DBforPostgreSQL`; (5) criação do servidor `pg-cafe-pi6-g07`; (6) migrations e seed no banco da nuvem; (7) conferência dos dados pelo Prisma Studio.
+**Procedimento realizado:** (1) assinatura Azure for Students com o e-mail institucional; (2) login pelo Azure CLI; (3) criação do Resource Group `rg-cafe-pi6`; (4) registro do provedor `Microsoft.DBforPostgreSQL`; (5) criação do servidor `pg-cafe-pi6-g07`; (6) liberação do IP de quem administra no firewall do servidor; (7) aplicação das migrations (`npx prisma migrate deploy`); (8) importação do artefato analítico (`npm run data:import:agricultural -- ..\analytics\data\processed\artefato_agricola_v1.json`), idempotente por versão do modelo; (9) conferência pelo Prisma Studio; (10) criação do plano `plan-cafe-pi6` (B1, Linux) e do app `api-cafe-pi6-g07`; (11) publicação por ZIP com um **pacote pronto** (código compilado, dependências de produção e cliente do Prisma para Linux), com a build no servidor desligada, porque o `npm install` no plano B1 não terminava; (12) criação do Blob Storage e do Service Bus com `infra\azure\provision.ps1`.
 
 No desenvolvimento local, o `docker-compose.yml` publica o PostgreSQL na
 porta `5432`, alinhada ao `DATABASE_URL` usado pela API (`localhost:5432`).
 É necessário manter o Docker Desktop em execução antes de iniciar o NestJS.
 
-**Limitações e custo:** a API não está publicada, e o seed contém dados de teste. O crédito do Azure for Students é de US$ 100, com validade de 12 meses. A camada Burstable é indicada para desenvolvimento e testes.
+**Limitações e custo:** a regra de acesso (RF06.2) só mostra os municípios vinculados ao usuário, e o cadastro público cria sempre o perfil `PRODUTOR`; por isso foi criado um usuário `ADMIN` (`admin@cafe-pi.local`, senha guardada fora do repositório), que vê todos os municípios. O técnico de demonstração continua sem municípios vinculados e recebe listas vazias. Além dos dados importados, o banco da nuvem mantém os 3 municípios, o usuário técnico e os registros de teste da Sprint 2 (por isso `Regiao_Produtora` mostra 1.579 linhas). O crédito do Azure for Students é de US$ 100, com validade de 12 meses. A camada Burstable é indicada para desenvolvimento e testes.
 
-**Evidências a anexar** em `docs/evidencias/` existem os prints de `nuvem-recurso` (grupo de recursos, visão geral do servidor e regras de rede) e `nuvem-servico.png` (migrations e seed e dados no Prisma Studio).
+**Evidências** em `docs/evidencias/`:
+- `nuvem-recurso1.png` e `nuvem-recurso2.jpg` (criação do servidor);
+- `nuvem-recurso3.png` (tela Rede, com as regras de firewall) e `nuvem-recurso4.png` (visão geral do servidor, status `Ready`);
+- `nuvem-servico1.png` e `nuvem-servico2.jpeg` (migrations e seed da Sprint 2);
+- `nuvem-servico3.png` (migrations e importação do artefato no Azure) e `nuvem-servico4.png` (Prisma Studio com `Compatibilidade_Cultura`, 9.456 linhas);
+- `nuvem-endpoint.txt` (respostas da API publicada, sem segredos) e `nuvem-configuracao.txt` (comandos usados, sem valores secretos).
 
-**Próximo passo:** publicar a API (por exemplo, no App Service), com `DATABASE_URL` e `JWT_SECRET` configurados e o comando `npm run start:prod`.
+**Próximos passos:** anexar o print do App Service no portal e, se o grupo quiser demonstrar a fila, ativar e testar a integração com o Blob e o Service Bus. Decisão de projeto em aberto: não há rota na aplicação para promover usuários a `ADMIN`, então o papel só pode ser dado no banco ou no seed.
 
 ### 8.3. Mensageria Azure
 
@@ -467,6 +475,8 @@ arquivo, baixar o blob e concluir a importação. A tabela `Data_File_Event`
 registra os estados `PROCESSING`, `PROCESSED` e `FAILED`; eventos concluídos
 são reconhecidos sem repetir a importação. Falhas são relançadas para retry e
 Dead Letter Queue conforme o `max-delivery-count` da fila.
+
+**Situação na nuvem:** o Blob Storage (`stcafepi6g07`, container `data-treated`) e o Service Bus (`sb-cafe-pi6-g07`, fila `data-file-available`, nível Standard, com cobrança fixa) **foram criados** com `infra/azure/provision.ps1`, e o usuário do administrador recebeu os papéis de envio e leitura. Na API publicada a integração continua **desativada** (`AZURE_INTEGRATION_ENABLED=false`): falta atribuir uma identidade gerenciada ao app com os papéis `Storage Blob Data Contributor`, `Azure Service Bus Data Sender` e `Azure Service Bus Data Receiver`, ativar a integração e testar o fluxo com um CSV de clima. O artefato analítico não passa por esse fluxo: ele entra pelo importador `data:import:agricultural` ou pelo `pipeline:worker`.
 
 O fluxo local pode ser validado com mocks, sem credenciais ou recursos Azure
 reais. Permanecem como limitações a ausência de hash e tamanho próprios para
@@ -500,12 +510,15 @@ O detalhamento está em `documentacao-preprocessamento.md`. Em resumo:
 | Etapa | Resultado |
 | --- | --- |
 | Seleção de colunas | Municípios de 5.571 para 1.576; colunas da lista de municípios de 9 para 5 |
-| Nulos | Clima: 0. PAM: 11 rendimentos vazios (área ou produção zero), mantidos |
+| Nulos | Clima: 0. PAM: 11 rendimentos vazios, todos em linhas com área e produção iguais a zero |
+| Registros sem produção | **11** linhas com área e produção zero removidas (152.797 para 152.786) |
 | Duplicados | 0 |
 | Inconsistências | 0 violações das regras de domínio |
-| Outliers | Contados (chuva 8,12%) e **mantidos**, por serem eventos reais |
+| Rendimentos implausíveis | **39** marcados como nulos (acima de Q3 + 5 × IQR por cultura): café 27, feijão 9, laranja 2 e soja 1 |
+| Outliers do clima | Contados (chuva 8,12%) e **mantidos**, por serem eventos reais |
+| Cobertura das séries | 7.011 séries município-cultura entre 2015 e 2024: 5.025 com os 10 anos e 717 com menos de 5 |
 | Novas variáveis | `chuva_anual`, `amplitude_termica` e `contraste_chuva` |
-| Rótulos | "Apto" = área média de 2015 a 2024 de pelo menos 500 ha (café 369, cana 556, soja 453, milho 558, laranja 161 e feijão 170) |
+| Rótulos | "Apto" = área média de 2015 a 2024 de pelo menos 500 ha, **contando os anos sem registro como área zero** (café 368, cana 550, soja 423, milho 557, laranja 160 e feijão 162) |
 | Padronização | `StandardScaler` dentro dos modelos, ajustado só no treino |
 | Resultado | Tabela única de 1.576 municípios por 31 colunas |
 
@@ -515,20 +528,20 @@ Notebooks em `analytics/notebooks/`: `00_preprocessamento`, `02_correlacao`, `03
 
 **Correlação (Spearman).** As correlações do clima com a área colhida são moderadas. A cana tem as maiores (radiação 0,53, umidade −0,51 e temperatura média 0,49). O café tem correlações fracas (até 0,12 em módulo), o que indica dependência da combinação de variáveis.
 
-**K-Means (não supervisionado).** Agrupa os municípios pelo perfil climático, sem usar a cultura. Melhor valor: k = 7, com silhouette de 0,334 (separação moderada). Por exemplo, um dos grupos concentra 55% de municípios com café e outro, 88% com cana.
+**K-Means (não supervisionado).** Agrupa os municípios pelo perfil climático, sem usar a cultura. Melhor valor: k = 7, com silhouette de 0,334 (separação moderada). Por exemplo, um dos grupos concentra 55% de municípios com café e outro, 87% com cana.
 
 **Classificação (supervisionada).** Para cada cultura, um modelo responde "apto ou não apto" com o clima e a localização. Foram comparados três algoritmos (regressão logística, Random Forest e Gradient Boosting) com **validação espacial**: os municípios são agrupados em células de 1° e células iguais nunca ficam em treino e teste ao mesmo tempo. O melhor modelo de cada cultura foi escolhido pela acurácia balanceada.
 
 | Cultura | Melhor modelo | Baseline | Acurácia | Acurácia balanceada | AUC |
 | --- | --- | --- | --- | --- | --- |
-| Cana-de-açúcar | Gradient Boosting | 64,7% | **91,8%** | 90,6% | 0,948 |
-| Café | Random Forest | 76,6% | **87,9%** | 81,1% | 0,903 |
-| Soja | Random Forest | 71,3% | 80,3% | 79,2% | 0,896 |
-| Milho | Gradient Boosting | 64,6% | 73,4% | 69,9% | 0,776 |
-| Laranja | Regressão logística | 89,8% | 73,6% | 80,1% | 0,816 |
-| Feijão | Regressão logística | 89,2% | 67,8% | 66,5% | 0,680 |
+| Cana-de-açúcar | Gradient Boosting | 65,1% | **91,5%** | 90,4% | 0,946 |
+| Café | Random Forest | 76,6% | **88,0%** | 81,5% | 0,907 |
+| Soja | Random Forest | 73,2% | 80,2% | 78,6% | 0,893 |
+| Milho | Gradient Boosting | 64,7% | 73,5% | 69,9% | 0,777 |
+| Laranja | Regressão logística | 89,8% | 73,7% | 80,4% | 0,819 |
+| Feijão | Regressão logística | 89,7% | 67,1% | 66,4% | 0,693 |
 
-O *baseline* é a acurácia de responder sempre "não apto". Laranja e feijão são raros (cerca de 10% dos municípios), e os modelos foram balanceados para encontrá-los, o que mantém um recall alto e reduz a acurácia. **Matriz de confusão do café:** 1.134 verdadeiros negativos, 73 falsos positivos, 117 falsos negativos e 252 verdadeiros positivos. As matrizes de todas as culturas estão em `data/processed/matrizes_confusao.png`.
+O *baseline* é a acurácia de responder sempre "não apto". Laranja e feijão são raros (cerca de 10% dos municípios), e os modelos foram balanceados para encontrá-los, o que mantém um recall alto e reduz a acurácia. **Matriz de confusão do café:** 1.132 verdadeiros negativos, 76 falsos positivos, 113 falsos negativos e 255 verdadeiros positivos. As matrizes de todas as culturas estão em `data/processed/matrizes_confusao.png`.
 
 **Cultura dominante (multiclasse).** Acurácia de 72% (baseline 36,9%) e acurácia balanceada de 51%. É um problema mais difícil que o sim ou não.
 
@@ -555,7 +568,7 @@ O *baseline* é a acurácia de responder sempre "não apto". Laranja e feijão s
 - Corrigir o filtro de ano da safra (conversão de tipo nos DTOs de consulta).
 
 **Prioridade média**
-- Publicar a API na nuvem e anexar as evidências (`nuvem-*.png`).
+- API publicada no Azure (ver 8.2) e testada com o usuário ADMIN. Falta: anexar o print do App Service no portal, trocar a senha do técnico de demonstração e, se o grupo quiser demonstrar a fila, ativar e testar a integração com o Blob e o Service Bus. Definir como administradores serão criados na aplicação (seed ou rota protegida).
 - Mobile: cluster, compatibilidade, cache offline e CRUD para Administrador e Técnico; extrair os contratos HTTP para um módulo compartilhado.
 - Decidir se o termo "apto" será trocado por um nome mais claro (por exemplo, "produtor relevante").
 - Alinhar com a professora a métrica de aceite (acurácia acima de 90%: hoje só a cana passa).
@@ -575,9 +588,9 @@ O índice de evidências reproduzíveis está em `docs/evidencias/README.md`.
 | E-01 | Back-end (build, lint, e2e e Swagger) | Capturada (`swagger-api.png`) |
 | E-02 | Web integrado | Capturada (`dashboard-web.png`) |
 | E-03 | Mobile integrado | Pendente (print) |
-| E-04 | Banco de dados | Pendente (print do Prisma Studio ou das tabelas) |
+| E-04 | Banco de dados | Capturada (`nuvem-servico4.png`: Prisma Studio com `Compatibilidade_Cultura`, 9.456 linhas) |
 | E-05 | Commits | Conferir o histórico filtrado por autor no GitHub |
-| E-06 | Nuvem | Parcial: anexar `nuvem-recurso.png` e `nuvem-servico.png` |
+| E-06 | Nuvem | Banco no Azure com o modelo agrícola e os dados importados, API publicada no App Service, Blob e Service Bus criados (`nuvem-recurso1` a `4`, `nuvem-servico1` a `4`, `nuvem-endpoint.txt` e `nuvem-configuracao.txt`); integração da fila ainda não ativada nem testada |
 | E-07 e E-08 | Coleta, tratamento e mineração | Notebooks executados (saídas em `analytics/data/processed/`) |
 | E-09 | Validação técnica | Arquivos em `docs/evidencias/` |
 

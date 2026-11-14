@@ -1,0 +1,20 @@
+Teste da API publicada no Azure App Service - 13/11/2026
+URL: https://api-cafe-pi6-g07.azurewebsites.net
+(nenhum token, senha ou connection string foi registrado)
+
+Sem login
+GET  /api                              -> HTTP 200 (Swagger)
+GET  /regioes (sem token)              -> HTTP 401
+
+Usuario tecnico de demonstracao (nao vinculado a municipios)
+POST /auth/login                       -> token recebido
+GET  /modelos/metricas                 -> 6 registros (uma linha por cultura)
+GET  /regioes?uf=SP                    -> total 0 (regra RF06.2: so municipios vinculados)
+
+Usuario ADMIN (ve todos os municipios)
+POST /auth/login                       -> perfil ADMIN, token recebido
+GET  /regioes                          -> total 1576
+GET  /compatibilidades/{Patrocinio-MG} -> ranking: Soja 0,886; Feijao 0,867; Milho 0,851;
+                                          Cafe 0,777; Laranja 0,389; Cana-de-acucar 0,165
+GET  /compatibilidades?cultura=cafe&min=0.9 -> total 104
+GET  /clusters/{Patrocinio-MG}         -> grupo 3 (versao cafe-pi-2026-10-v1)

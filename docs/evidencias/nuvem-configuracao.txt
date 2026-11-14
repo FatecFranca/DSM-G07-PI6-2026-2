@@ -1,0 +1,29 @@
+Configuracao do ambiente Azure (sem valores secretos)
+
+Assinatura: Azure for Students | Grupo de recursos: rg-cafe-pi6 | Regiao: Brazil South
+
+Banco
+  az postgres flexible-server create ... (pg-cafe-pi6-g07, Burstable Standard_B1ms, PostgreSQL 16)
+  az postgres flexible-server firewall-rule create ... (IP do administrador; AllowAzureServices 0.0.0.0)
+  az postgres flexible-server update --admin-password <nova senha>   # senha redefinida e guardada fora do repositorio
+  npx prisma migrate deploy
+  npm run data:import:agricultural -- ..\analytics\data\processed\artefato_agricola_v1.json
+
+API (App Service)
+  az provider register --namespace Microsoft.Web
+  az appservice plan create --name plan-cafe-pi6 --sku B1 --is-linux
+  az webapp create --name api-cafe-pi6-g07 --plan plan-cafe-pi6 --runtime "NODE:24-lts"
+  az webapp config appsettings set ... DATABASE_URL, JWT_SECRET, CORS_ORIGINS,
+      SCM_DO_BUILD_DURING_DEPLOYMENT=false, AZURE_INTEGRATION_ENABLED=false,
+      WEBSITES_CONTAINER_START_TIME_LIMIT=600          # valores nao registrados
+  az webapp config set --startup-file "node dist/main"
+  az webapp deploy --type zip --src-path api-pronta.zip
+      (pacote pronto: dist + dependencias de producao + cliente Prisma para Linux;
+       a build no servidor foi desligada porque o npm install no plano B1 nao terminava)
+
+Blob Storage e Service Bus
+  az provider register --namespace Microsoft.ServiceBus
+  infra\azure\provision.ps1 -StorageAccount stcafepi6g07 -ServiceBusNamespace sb-cafe-pi6-g07
+      (container data-treated, fila data-file-available)
+  az role assignment create ... (usuario do administrador: Storage Blob Data Contributor,
+      Azure Service Bus Data Sender, Azure Service Bus Data Receiver)

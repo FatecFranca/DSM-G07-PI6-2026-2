@@ -90,18 +90,20 @@ em treino e teste ao mesmo tempo.
 ## Resultados de referência
 
 - **Pré-processamento:** 5.571 → 1.576 municípios (ES, MG e SP); PAM com 152.797
-  linhas; sem nulos no clima, sem duplicados e sem violações de regra.
+  linhas, das quais 11 sem produção foram removidas (152.786) e 39 rendimentos
+  implausíveis marcados como nulos; sem nulos no clima, sem duplicados e sem
+  violações de regra. Anos sem registro contam como área zero no rótulo.
 - **K-Means:** melhor k = 7, silhouette 0,334 (separação moderada).
 - **Classificação (melhor modelo por cultura):**
 
 | Cultura | Acurácia | Baseline | Acurácia balanceada | AUC |
 | --- | --- | --- | --- | --- |
-| Café | 87,9% | 76,6% | 81,1% | 0,903 |
-| Cana-de-açúcar | 91,8% | 64,7% | 90,6% | 0,948 |
-| Soja | 80,3% | 71,3% | 79,2% | 0,896 |
-| Milho | 73,4% | 64,6% | 69,9% | 0,776 |
-| Laranja | 73,6% | 89,8% | 80,1% | 0,816 |
-| Feijão | 67,8% | 89,2% | 66,5% | 0,680 |
+| Café | 88,0% | 76,6% | 81,5% | 0,907 |
+| Cana-de-açúcar | 91,5% | 65,1% | 90,4% | 0,946 |
+| Soja | 80,2% | 73,2% | 78,6% | 0,893 |
+| Milho | 73,5% | 64,7% | 69,9% | 0,777 |
+| Laranja | 73,7% | 89,8% | 80,4% | 0,819 |
+| Feijão | 67,1% | 89,7% | 66,4% | 0,693 |
 
   Laranja e feijão são raros, e os modelos foram balanceados para achá-los (recall
   alto, precisão baixa), então a acurácia fica abaixo do baseline.

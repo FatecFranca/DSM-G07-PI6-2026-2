@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "TipoAlertaClimatica" AS ENUM ('TEMPERATURA_ALTA', 'TEMPERATURA_BAIXA', 'CHUVA_INTENSA', 'ESTIAGEM');
 
 -- CreateEnum
