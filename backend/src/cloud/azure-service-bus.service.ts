@@ -55,7 +55,7 @@ export class AzureServiceBusService implements OnModuleDestroy {
     this.client = this.config.serviceBusConnectionString
       ? new ServiceBusClient(this.config.serviceBusConnectionString)
       : new ServiceBusClient(
-          `https://${this.config.serviceBusNamespace}.servicebus.windows.net`,
+          `${this.config.serviceBusNamespace}.servicebus.windows.net`,
           new DefaultAzureCredential(),
         );
     return this.client;

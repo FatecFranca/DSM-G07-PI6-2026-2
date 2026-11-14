@@ -13,7 +13,7 @@ senhas, URLs privadas ou outras credenciais.
 | E-03 | Front-end Mobile | [App Expo](../../mobile/App.tsx) e [cliente HTTP](../../mobile/src/api.ts) | Reproduzível |
 | E-04 | Banco de dados | [Schema Prisma](../../backend/prisma/schema.prisma), seed e PostgreSQL local; banco no Azure com os dados importados (`nuvem-servico3.png` e `nuvem-servico4.png`) | Capturada |
 | E-05 | Commits da equipe | [Histórico Git](./git-historico.txt) | Reproduzível |
-| E-06 | Nuvem | Banco PostgreSQL, API (App Service), Blob e Service Bus no Azure (`nuvem-recurso*.png`, `nuvem-servico*.png`, `nuvem-endpoint.txt`, `nuvem-configuracao.txt`); integração da fila ainda não ativada | Parcial |
+| E-06 | Nuvem | Banco PostgreSQL, API (App Service), Blob e Service Bus no Azure, com o fluxo da fila testado de ponta a ponta (`nuvem-recurso*.png`, `nuvem-servico*.png`, `nuvem-endpoint.txt`, `nuvem-configuracao.txt`) | Parcial (falta o print do App Service) |
 | E-07 | Coleta e tratamento | [Scripts de coleta](../../analytics/scripts/) e [README analytics](../../analytics/README.md) | Scripts validados |
 | E-08 | Mineração de dados | [Clusters](../../backend/src/clusters/) e notebooks analíticos | Resultado preliminar |
 | E-09 | Validação técnica | [Backend](./backend-validacao.txt), [Web](./web-validacao.txt), [Mobile](./mobile-validacao.txt) e [Analytics](./analytics-validacao.txt) | Aprovado |
@@ -154,9 +154,7 @@ e o Blob Storage e o Service Bus foram criados com `infra/azure/provision.ps1`.
 As respostas da API publicada e os comandos usados estão em `nuvem-endpoint.txt` e
 `nuvem-configuracao.txt` (sem segredos).
 
-**Ainda pendente:** identidade gerenciada do app com os papéis do Blob e do Service Bus,
-ativação da integração (`AZURE_INTEGRATION_ENABLED=true`) e teste do fluxo com um CSV,
-e o print do App Service no portal. Já existe um usuário ADMIN para a demonstração.
+**Ainda pendente:** o print do App Service no portal. A integração da fila foi ativada (identidade gerenciada do app com os papéis do Blob e do Service Bus) e testada: o CSV publicado foi processado pelo consumidor na nuvem (evento `PROCESSED` e linha importada em `Condicao_Climatica`). Já existe um usuário ADMIN para a demonstração.
 
 ## E-07 e E-08 — Analytics
 

@@ -27,3 +27,13 @@ Blob Storage e Service Bus
       (container data-treated, fila data-file-available)
   az role assignment create ... (usuario do administrador: Storage Blob Data Contributor,
       Azure Service Bus Data Sender, Azure Service Bus Data Receiver)
+
+Integracao da fila (identidade gerenciada, sem connection strings)
+  az webapp identity assign --name api-cafe-pi6-g07
+  az role assignment create ... (identidade do app: Storage Blob Data Contributor no storage;
+      Azure Service Bus Data Sender e Data Receiver no namespace)
+  az webapp config appsettings set ... AZURE_INTEGRATION_ENABLED=true AZURE_STORAGE_ACCOUNT_NAME=stcafepi6g07
+      AZURE_STORAGE_CONTAINER_NAME=data-treated AZURE_SERVICE_BUS_NAMESPACE=sb-cafe-pi6-g07
+      AZURE_SERVICE_BUS_QUEUE_NAME=data-file-available
+  Correcao no codigo: azure-service-bus.service.ts, endereco sem "https://" (usar <namespace>.servicebus.windows.net)
+  Teste: npx ts-node --transpile-only scripts/publish-data-file.ts <csv de clima> clima

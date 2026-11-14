@@ -442,8 +442,8 @@ representam a coleta oficial.
 | Schema | Modelo agrícola completo (5 migrations aplicadas) |
 | Dados | Artefato analítico `cafe-pi-2026-10-v1` importado: 1.576 municípios, 6 culturas, 152.786 safras, 1.576 climas, 1.576 clusters, 9.456 compatibilidades e 6 conjuntos de métricas |
 | API | **Publicada** em `https://api-cafe-pi6-g07.azurewebsites.net` (App Service Linux, Node 24 LTS, plano B1); Swagger em `/api` |
-| Blob Storage e Service Bus | **Criados** (`stcafepi6g07`, container `data-treated`; `sb-cafe-pi6-g07`, fila `data-file-available`). A integração está **desativada** na API (`AZURE_INTEGRATION_ENABLED=false`) e o fluxo ainda não foi testado na nuvem (ver 8.3) |
-| Variáveis de ambiente | `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, `SCM_DO_BUILD_DURING_DEPLOYMENT`, `AZURE_INTEGRATION_ENABLED` e `WEBSITES_CONTAINER_START_TIME_LIMIT` (valores não registrados) |
+| Blob Storage e Service Bus | **Criados e em uso** (`stcafepi6g07`, container `data-treated`; `sb-cafe-pi6-g07`, fila `data-file-available`). A integração está **ativada** na API (`AZURE_INTEGRATION_ENABLED=true`, com identidade gerenciada) e o fluxo foi testado de ponta a ponta (ver 8.3) |
+| Variáveis de ambiente | `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, `SCM_DO_BUILD_DURING_DEPLOYMENT`, `WEBSITES_CONTAINER_START_TIME_LIMIT` e as da integração Azure (`AZURE_INTEGRATION_ENABLED=true`, `AZURE_STORAGE_ACCOUNT_NAME`, `AZURE_STORAGE_CONTAINER_NAME`, `AZURE_SERVICE_BUS_NAMESPACE` e `AZURE_SERVICE_BUS_QUEUE_NAME`, sem connection strings). Valores secretos não registrados |
 
 **Procedimento realizado:** (1) assinatura Azure for Students com o e-mail institucional; (2) login pelo Azure CLI; (3) criação do Resource Group `rg-cafe-pi6`; (4) registro do provedor `Microsoft.DBforPostgreSQL`; (5) criação do servidor `pg-cafe-pi6-g07`; (6) liberação do IP de quem administra no firewall do servidor; (7) aplicação das migrations (`npx prisma migrate deploy`); (8) importação do artefato analítico (`npm run data:import:agricultural -- ..\analytics\data\processed\artefato_agricola_v1.json`), idempotente por versão do modelo; (9) conferência pelo Prisma Studio; (10) criação do plano `plan-cafe-pi6` (B1, Linux) e do app `api-cafe-pi6-g07`; (11) publicação por ZIP com um **pacote pronto** (código compilado, dependências de produção e cliente do Prisma para Linux), com a build no servidor desligada, porque o `npm install` no plano B1 não terminava; (12) criação do Blob Storage e do Service Bus com `infra\azure\provision.ps1`.
 
@@ -460,7 +460,7 @@ porta `5432`, alinhada ao `DATABASE_URL` usado pela API (`localhost:5432`).
 - `nuvem-servico3.png` (migrations e importação do artefato no Azure) e `nuvem-servico4.png` (Prisma Studio com `Compatibilidade_Cultura`, 9.456 linhas);
 - `nuvem-endpoint.txt` (respostas da API publicada, sem segredos) e `nuvem-configuracao.txt` (comandos usados, sem valores secretos).
 
-**Próximos passos:** anexar o print do App Service no portal e, se o grupo quiser demonstrar a fila, ativar e testar a integração com o Blob e o Service Bus. Decisão de projeto em aberto: não há rota na aplicação para promover usuários a `ADMIN`, então o papel só pode ser dado no banco ou no seed.
+**Próximos passos:** anexar o print do App Service no portal e trocar a senha do técnico de demonstração. Decisão de projeto em aberto: não há rota na aplicação para promover usuários a `ADMIN`, então o papel só pode ser dado no banco ou no seed.
 
 ### 8.3. Mensageria Azure
 
@@ -476,7 +476,7 @@ registra os estados `PROCESSING`, `PROCESSED` e `FAILED`; eventos concluídos
 são reconhecidos sem repetir a importação. Falhas são relançadas para retry e
 Dead Letter Queue conforme o `max-delivery-count` da fila.
 
-**Situação na nuvem:** o Blob Storage (`stcafepi6g07`, container `data-treated`) e o Service Bus (`sb-cafe-pi6-g07`, fila `data-file-available`, nível Standard, com cobrança fixa) **foram criados** com `infra/azure/provision.ps1`, e o usuário do administrador recebeu os papéis de envio e leitura. Na API publicada a integração continua **desativada** (`AZURE_INTEGRATION_ENABLED=false`): falta atribuir uma identidade gerenciada ao app com os papéis `Storage Blob Data Contributor`, `Azure Service Bus Data Sender` e `Azure Service Bus Data Receiver`, ativar a integração e testar o fluxo com um CSV de clima. O artefato analítico não passa por esse fluxo: ele entra pelo importador `data:import:agricultural` ou pelo `pipeline:worker`.
+**Situação na nuvem:** o Blob Storage (`stcafepi6g07`, container `data-treated`) e o Service Bus (`sb-cafe-pi6-g07`, fila `data-file-available`, nível Standard, com cobrança fixa) foram criados com `infra/azure/provision.ps1`. O app recebeu uma identidade gerenciada com os papéis `Storage Blob Data Contributor`, `Azure Service Bus Data Sender` e `Azure Service Bus Data Receiver`, e a integração foi ativada (`AZURE_INTEGRATION_ENABLED=true`). **Teste de ponta a ponta:** um CSV de clima de uma linha (Franca, 14/11/2026) foi enviado com `backend/scripts/publish-data-file.ts` ao Blob e à fila; o consumidor dentro da API na nuvem recebeu o evento, registrou-o em `Data_File_Event` com o estado `PROCESSED` e importou a linha em `Condicao_Climatica` (27,5 °C, 3,2 mm, 71% de umidade). Mensagens de diagnóstico com formato inválido, enviadas de propósito, foram rejeitadas e terminaram na dead-letter queue (2 mensagens), como esperado. **Correção necessária no código:** o `azure-service-bus.service.ts` montava o endereço da fila com `https://` na frente, e com isso o envio e o consumo falhavam com a identidade gerenciada. A correção é remover o `https://` (usar `<namespace>.servicebus.windows.net`); ela já está aplicada na API publicada e na cópia local, mas **ainda não foi commitada**. O script `publish-data-file.ts` também tem um erro de tipo (variável possivelmente indefinida, rodando com `ts-node --transpile-only`) e não encerra a conexão com a fila ao terminar. O artefato analítico do ML não passa por esse fluxo: ele entra pelo importador `data:import:agricultural` ou pelo `pipeline:worker`.
 
 O fluxo local pode ser validado com mocks, sem credenciais ou recursos Azure
 reais. Permanecem como limitações a ausência de hash e tamanho próprios para
@@ -568,7 +568,7 @@ O *baseline* é a acurácia de responder sempre "não apto". Laranja e feijão s
 - Corrigir o filtro de ano da safra (conversão de tipo nos DTOs de consulta).
 
 **Prioridade média**
-- API publicada no Azure (ver 8.2) e testada com o usuário ADMIN. Falta: anexar o print do App Service no portal, trocar a senha do técnico de demonstração e, se o grupo quiser demonstrar a fila, ativar e testar a integração com o Blob e o Service Bus. Definir como administradores serão criados na aplicação (seed ou rota protegida).
+- API publicada no Azure (ver 8.2), testada com o usuário ADMIN, e fila (Blob e Service Bus) ativada e testada. Falta: anexar o print do App Service no portal, trocar a senha do técnico de demonstração e definir como administradores serão criados na aplicação (seed ou rota protegida). Corrigir no repositório o endereço do Service Bus (ver 8.3).
 - Mobile: cluster, compatibilidade, cache offline e CRUD para Administrador e Técnico; extrair os contratos HTTP para um módulo compartilhado.
 - Decidir se o termo "apto" será trocado por um nome mais claro (por exemplo, "produtor relevante").
 - Alinhar com a professora a métrica de aceite (acurácia acima de 90%: hoje só a cana passa).
@@ -590,7 +590,7 @@ O índice de evidências reproduzíveis está em `docs/evidencias/README.md`.
 | E-03 | Mobile integrado | Pendente (print) |
 | E-04 | Banco de dados | Capturada (`nuvem-servico4.png`: Prisma Studio com `Compatibilidade_Cultura`, 9.456 linhas) |
 | E-05 | Commits | Conferir o histórico filtrado por autor no GitHub |
-| E-06 | Nuvem | Banco no Azure com o modelo agrícola e os dados importados, API publicada no App Service, Blob e Service Bus criados (`nuvem-recurso1` a `4`, `nuvem-servico1` a `4`, `nuvem-endpoint.txt` e `nuvem-configuracao.txt`); integração da fila ainda não ativada nem testada |
+| E-06 | Nuvem | Banco no Azure com o modelo agrícola e os dados importados, API publicada no App Service, Blob e Service Bus criados e com o fluxo testado de ponta a ponta (`nuvem-recurso1` a `4`, `nuvem-servico1` a `4`, `nuvem-endpoint.txt` e `nuvem-configuracao.txt`); falta o print do App Service |
 | E-07 e E-08 | Coleta, tratamento e mineração | Notebooks executados (saídas em `analytics/data/processed/`) |
 | E-09 | Validação técnica | Arquivos em `docs/evidencias/` |
 

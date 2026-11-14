@@ -18,3 +18,9 @@ GET  /compatibilidades/{Patrocinio-MG} -> ranking: Soja 0,886; Feijao 0,867; Mil
                                           Cafe 0,777; Laranja 0,389; Cana-de-acucar 0,165
 GET  /compatibilidades?cultura=cafe&min=0.9 -> total 104
 GET  /clusters/{Patrocinio-MG}         -> grupo 3 (versao cafe-pi-2026-10-v1)
+
+Fila (Blob Storage + Service Bus), teste de ponta a ponta - 14/11/2026
+publish-data-file.ts (CSV de clima, 1 linha, Franca-SP, 14/11/2026) -> evento publicado
+Data_File_Event                         -> 1 evento, estado PROCESSED
+Condicao_Climatica (Franca, 2026-11-14) -> 27,5 C | 3,2 mm | 71 % | 18,4  (importado pelo consumidor na nuvem)
+Fila data-file-available                -> 0 mensagens ativas; 2 na dead-letter (mensagens de diagnostico invalidas, enviadas de proposito)
